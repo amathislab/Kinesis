@@ -19,7 +19,7 @@ Importantly, KINESIS generates muscle activity patterns that correlate well with
   <img src="./assets/kit/kit_walk.gif" alt="Walking Forward" width="19%"/>
   <img src="./assets/kit/kit_gradual_turn.gif" alt="Gradual Turn" width="19%"/>
   <img src="./assets/kit/kit_turn_in_place.gif" alt="Turn in Place" width="19%"/>
-  <img src="./assets/kit/kit_backwards.gif" alt="Walking Backwards" width="19%"/>
+  <img src="./assets/kit/kit_backward.gif" alt="Walking Backwards" width="19%"/>
   <img src="./assets/kit/kit_run.gif" alt="Running" width="19%"/>
 </p>
 
@@ -34,9 +34,8 @@ Importantly, KINESIS generates muscle activity patterns that correlate well with
 
 <h3 align="center">High-Level Control</h3>
 <p align="center">
-  <img src="./assets/high_level/hl_target.gif" alt="Reaching Target" width="49%"/>
+  <img src="./assets/high_level/hl_target_reach.gif" alt="Reaching Target" width="49%"/>
   <img src="./assets/high_level/hl_directional.gif" alt="Directional Control" width="49%"/>
-</p>
 
 ## EMG Comparison
 <p align="center">
