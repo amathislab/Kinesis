@@ -16,35 +16,32 @@ Importantly, KINESIS generates muscle activity patterns that correlate well with
 
 <h3 align="center">Motion Imitation</h3>
 <p align="center">
-  <img src="./assets/kit_walk.gif" alt="Walking Forward" width="19%"/>
-  <img src="./assets/kit_gradual_turn.gif" alt="Gradual Turn" width="19%"/>
-  <img src="./assets/kit_turn_in_place.gif" alt="Turn in Place" width="19%"/>
-  <img src="./assets/kit_backwards.gif" alt="Walking Backwards" width="19%"/>
-  <img src="./assets/kit_run.gif" alt="Running" width="19%"/>
+  <img src="./assets/kit/kit_walk.gif" alt="Walking Forward" width="19%"/>
+  <img src="./assets/kit/kit_gradual_turn.gif" alt="Gradual Turn" width="19%"/>
+  <img src="./assets/kit/kit_turn_in_place.gif" alt="Turn in Place" width="19%"/>
+  <img src="./assets/kit/kit_backwards.gif" alt="Walking Backwards" width="19%"/>
+  <img src="./assets/kit/kit_run.gif" alt="Running" width="19%"/>
 </p>
 
+<h3 align="center">Text-to-Motion Control</h3>
+<p align="center">
+  <img src="./assets/t2m/t2m_forward.gif" alt="Walking Forward" width="19%"/>
+  <img src="./assets/t2m/t2m_circle.gif" alt="Circling" width="19%"/>
+  <img src="./assets/t2m/t2m_backwards.gif" alt="Walking Backwards" width="19%"/>
+  <img src="./assets/t2m/t2m_left.gif" alt="Turning Left" width="19%"/>
+  <img src="./assets/t2m/t2m_right.gif" alt="Turning Right" width="19%"/>
+</p>
 
+<h3 align="center">High-Level Control</h3>
+<p align="center">
+  <img src="./assets/high_level/hl_target.gif" alt="Reaching Target" width="49%"/>
+  <img src="./assets/high_level/hl_directional.gif" alt="Directional Control" width="49%"/>
+</p>
 
-<!-- ## Demonstrations
+## EMG Comparison
+<p align="center">
+  <img src="./assets/Fig7-emg.png" alt="EMG Comparison" width="80%"/>
 
-<table>
-  <tr>
-    <td><img src="./assets/motion_imitation.gif" alt="Motion Imitation" width="400"/></td>
-    <td><img src="./assets/text_to_motion.gif" alt="Text-to-Motion" width="400"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Motion Imitation</b></td>
-    <td align="center"><b>Text-to-Motion Control</b></td>
-  </tr>
-  <tr>
-    <td><img src="./assets/goal_reaching.gif" alt="High-Level Control" width="400"/></td>
-    <td><img src="./assets/muscle_validation.gif" alt="Muscle Validation" width="400"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>High-Level Goal-Directed Control</b></td>
-    <td align="center"><b>Muscle Activity Validation</b></td>
-  </tr>
-</table> -->
 
 ## Installation
 
