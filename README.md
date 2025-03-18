@@ -15,13 +15,13 @@ Importantly, KINESIS generates muscle activity patterns that correlate well with
 ## Demonstrations
 
 ### Motion Imitation
-<div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 10px;">
-  <div><img src="./assets/kit_walk.gif" alt="Walking Forward"/></div>
-  <div><img src="./assets/kit_gradual_turn.gif" alt="Gradual Turn"/></div>
-  <div><img src="./assets/kit_turn_in_place.gif" alt="Turn in Place"/></div>
-  <div><img src="./assets/kit_backwards.gif" alt="Walking Backwards"/></div>
-  <div><img src="./assets/kit_run.gif" alt="Running"/></div>
-</div>
+<p align="center">
+  <img src="./assets/kit_walk.gif" alt="Walking Forward" width="100"/>
+  <img src="./assets/kit_gradual_turn.gif" alt="Gradual Turn" width="100"/>
+  <img src="./assets/kit_turn_in_place.gif" alt="Turn in Place" width="100"/>
+  <img src="./assets/kit_backwards.gif" alt="Walking Backwards" width="100"/>
+  <img src="./assets/kit_run.gif" alt="Running" width="100"/>
+</p>
 
 <!-- ## Demonstrations
 
