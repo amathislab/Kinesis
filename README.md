@@ -1,7 +1,7 @@
 # KINESIS: Reinforcement Learning-Based Motion Imitation for Physiologically Plausible Musculoskeletal Motor Control
 
 <p align="center">
-  <img src="./assets/kinesis_logo.png" alt="KINESIS Logo" width="400"/>
+  <img src="./assets/Fig1-abstract.png" alt="KINESIS Logo" width="400"/>
 </p>
 
 ## Overview
@@ -13,6 +13,19 @@ Importantly, KINESIS generates muscle activity patterns that correlate well with
 > **Note:** The code and datasets will be available soon!
 
 ## Demonstrations
+
+### Motion Imitation
+<table>
+  <tr>
+    <td><img src="./assets/kit_walk.gif" alt="Walking Forward" width="800"/></td>
+    <td><img src="./assets/kit_gradual_turn.gif" alt="Gradual Turn" width="800"/></td>
+    <td><img src="./assets/kit_turn_in_place.gif" alt="Turn in Place" width="800"/></td>
+    <td><img src="./assets/kit_backwards.gif" alt="Walking Backwards" width="800"/></td>
+    <td><img src="./assets/kit_run.gif" alt="Running" width="800"/></td>
+  </tr>
+</table>
+
+<!-- ## Demonstrations
 
 <table>
   <tr>
@@ -31,7 +44,7 @@ Importantly, KINESIS generates muscle activity patterns that correlate well with
     <td align="center"><b>High-Level Goal-Directed Control</b></td>
     <td align="center"><b>Muscle Activity Validation</b></td>
   </tr>
-</table>
+</table> -->
 
 ## Installation
 
@@ -60,4 +73,4 @@ This project was funded by Swiss SNF grant (310030 212516). We thank members of 
 
 ## License
 
-Coming soon.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
