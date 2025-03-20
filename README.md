@@ -58,8 +58,9 @@ If you find this work useful in your research, please consider citing our paper:
 @article{simos2025kinesis,
   title={Reinforcement learning-based motion imitation for physiologically plausible musculoskeletal motor control},
   author={Simos, Merkourios and Chiappa, Alberto Silvio and Mathis, Alexander},
-  journal={},
-  year={2025}
+  journal={arXiv},
+  year={2025},
+  doi={10.48550/arXiv.2503.14637}
 }
 ```
 
