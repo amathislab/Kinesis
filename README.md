@@ -8,7 +8,7 @@
 
 KINESIS is a model-free reinforcement learning framework for physiologically plausible musculoskeletal motor control. Using a musculoskeletal model of the lower body with 80 muscle actuators and 20 degrees of freedom, KINESIS achieves strong imitation performance on motion capture data, is controllable via natural language, and can be fine-tuned for high-level tasks like goal-directed movement.
 
-Importantly, KINESIS generates muscle activity patterns that correlate well with human electromyography (EMG) data, making it a promising model for tackling challenging problems in human motor control theory.
+Importantly, KINESIS generates muscle activity patterns that correlate well with human electromyography (EMG) data, making it a promising model for tackling challenging problems in human motor control theory. Check out the [arxiv article for more details!](https://arxiv.org/abs/2503.14637)
 
 > **Note:** The code and datasets will be available soon!
 
@@ -52,7 +52,7 @@ Example usage scripts will be available with the code release.
 
 ## Citation
 
-If you find this work useful in your research, please consider citing our paper:
+If you find this work useful in your research, please consider citing our [paper](https://arxiv.org/abs/2503.14637):
 
 ```bibtex
 @article{simos2025kinesis,
