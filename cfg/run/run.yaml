@@ -1,0 +1,39 @@
+# Workstation thread count
+num_threads: 128
+
+# Policy mode
+control_mode: "PD"
+
+# Train-test flags
+im_eval: False
+test: False
+
+# Rendering flags
+headless: True
+fast_forward: True
+
+# Motion configs
+motion_id: 0
+num_motions: 975
+random_start: True
+
+# Motion selection flags
+custom_set: False
+random_sample: False
+
+# Policy Observations
+# proprioceptive_inputs: ["root_height", "root_tilt", "local_body_pos", "local_body_rot", "local_body_vel", "local_body_ang_vel", "muscle_len", "muscle_vel", "muscle_force", "feet_contacts"]
+proprioceptive_inputs: ["root_height", "root_tilt", "local_body_pos", "local_body_rot", "local_body_vel", "local_body_ang_vel", "feet_contacts"]
+task_inputs: ["diff_local_body_pos", "diff_local_vel", "local_ref_body_pos"]
+
+# File paths -- change accordingly
+xml_path: "data/xml/myolegs.xml"
+motion_file: "data/amass_isaac_im_train.pkl"
+smpl_data_dir: "data/smpl"
+initial_pose_file: "data/initial_pose/full_initial_pose_dict.pkl"
+custom_motion_key_file: "data/motion_keys/kit_final_indices_train.npy"
+expert_path: ""
+
+# Extra analysis flags
+recording_biomechanics: False
+deactivate_muscles: False

@@ -1,0 +1,28 @@
+motion_id: 0
+im_eval: False
+test: True
+headless: False
+num_threads: 1
+fast_forward: False
+num_motions: 1
+random_start: False
+
+control_mode: "PD" # "PD" or "direct"
+
+custom_set: False
+stand_set: False
+walk_set: False
+random_sample: False
+
+proprioceptive_inputs: ["root_height", "root_tilt", "local_body_pos", "local_body_rot", "local_body_vel", "local_body_ang_vel", "feet_contacts"]
+task_inputs: ["diff_local_body_pos", "diff_local_vel", "local_ref_body_pos"]
+
+xml_path: "data/xml/myolegs.xml"
+motion_file: ""
+smpl_data_dir: "data/smpl"
+initial_pose_file: ""
+custom_motion_key_file: ""
+expert_path: ""
+
+recording_biomechanics: False
+deactivate_muscles: False

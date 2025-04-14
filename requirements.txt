@@ -1,0 +1,32 @@
+chumpy==0.70
+clip @ git+https://github.com/openai/CLIP.git@a1d071733d7111c9c014f024669f959182114e33
+easydict==1.11
+gym==0.26.2
+gym-notices==0.0.8
+gymnasium==0.29.1
+h5py==3.10.0
+hydra-core==1.3.2
+importlib_resources==6.4.5
+ipdb==0.13.13
+joblib==1.4.2
+lxml==5.1.0
+matplotlib==3.7.5
+mujoco==3.1.2
+# MyoSuite==2.2.0
+numpy==1.21.6
+numpy-stl==3.1.1
+omegaconf==2.3.0
+pandas==2.0.3
+# pink-noise-rl==2.0.1
+PyOpenGL==3.1.0
+pytest==8.3.5
+scikit-learn==1.3.2
+scipy==1.10.1
+sk-video==1.1.10
+# smpl_sim @ git+https://github.com/ZhengyiLuo/SMPLSim.git@f4add3ada0f75092016945f2912e0a729e0d54d4
+smplx @ git+https://github.com/ZhengyiLuo/smplx.git@a5b8e4ac14f79f3f33fd2cf2a16e6f507146b813
+termcolor==2.4.0
+# torch==1.13.1+cu116
+tqdm==4.66.2
+wandb==0.12.21
+warp-lang==0.10.1

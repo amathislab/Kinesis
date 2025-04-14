@@ -1,0 +1,24 @@
+# Default experiment name
+task: MyoLegs Imitation
+
+# Simulation Configs
+sim_timestep_inv: 150
+control_frequency_inv: 5
+
+# Control Configs
+kp_scale: 1.0
+kd_scale: 1.0
+clip_actions: True
+reward_specs:
+  "k_pos": 200
+  "k_vel": 5
+  "k_energy": 0.05
+  
+  "w_pos": 0.6
+  "w_vel": 0.2
+  "w_upright": 0.1
+  "w_energy": 0.1
+
+#### Task Configs
+resampling_interval: 100
+termination_distance: 0.15

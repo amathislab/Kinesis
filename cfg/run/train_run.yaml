@@ -1,0 +1,24 @@
+motion_id: 0
+im_eval: False
+test: False
+headless: True
+num_threads: 1
+fast_forward: True
+num_motions: 1000
+random_start: True
+
+control_mode: "PD" # "PD" or "direct"
+
+random_sample: False
+
+proprioceptive_inputs: ["root_height", "root_tilt", "local_body_pos", "local_body_rot", "local_body_vel", "local_body_ang_vel", "feet_contacts"]
+task_inputs: ["diff_local_body_pos", "diff_local_vel", "local_ref_body_pos"]
+
+xml_path: "data/xml/myolegs.xml"
+motion_file: "data/kit_train_motion_dict.pkl"
+smpl_data_dir: "data/smpl"
+initial_pose_file: "data/initial_pose/initial_pose_train.pkl"
+expert_path: ""
+
+recording_biomechanics: False
+deactivate_muscles: False

@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+  - env: env_im
+  - learning: single_epoch
+  - run: train_run
+
+notes: "Config file for the policy evaluation pytest"
+project: kinesis
+exp_name: test_train_scratch
+headless: True
+seed: 0
+no_log: False
+resume_str: null
+num_threads: 1
+test: False 
+output_dir: data/trained_models/${exp_name}
+epoch: 0
+im_eval: False
+num_primitive: 3
+num_experts: 3
+
+hydra:
+  job:
+    name: ${exp_name}
+    env_set:
+      OMP_NUM_THREADS: 1
+  run:
+    dir: data/trained_models/${exp_name}
+

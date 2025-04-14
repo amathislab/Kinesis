@@ -1,0 +1,72 @@
+# Always set to agent_im
+agent_name: "agent_directional"
+
+# Main training loop max epoch
+max_epoch: 100000000
+
+# RL policy type
+actor_type: "lattice"
+
+# PPO steps per epoch
+opt_num_epochs: 10
+
+# Trajectory samples per epoch
+min_batch_size: 51200
+
+# Maximum gradient norm for PPO
+policy_grad_clip: 25
+
+# Latest model save frequency
+save_curr_frequency: 50
+
+# Model save frequency
+save_frequency: 1000
+
+# Termination history flag
+resume_history: True
+
+# Dynamic std flag
+fix_std: False
+
+# Policy network log std
+log_std: 0
+
+# GAE discount factor
+gamma: 0.99
+
+# GAE tau
+tau: 0.95
+
+# PPO epsilon
+clip_epsilon: 0.2
+
+# Observation clipping
+clip_obs: False
+clip_obs_range: [-5.0, 5.0]
+
+
+policy_optimizer: "adam"
+policy_weightdecay: 0.0
+policy_lr: 5.e-5
+value_optimizer: "adam"
+value_weightdecay: 0.0
+value_lr: 3.e-4
+
+mlp:
+  units: [2048, 1536, 1024, 1024, 512, 512]
+  activation: silu
+
+  initializer:
+    name: default
+  regularizer:
+    name: None
+
+composer:
+  units: [1024, 512]
+  activation: silu
+
+moe:
+  units: [1024, 512, 256]
+  activation: silu
+
+masking_prob: 0.0
