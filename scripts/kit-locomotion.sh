@@ -13,7 +13,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --headless)
-            render=$2
+            headless=$2
             shift
             shift
             ;;
