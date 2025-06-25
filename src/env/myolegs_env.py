@@ -152,7 +152,7 @@ class MyoLegsEnv(BaseEnv):
 
         obs_dict =  compute_self_observations(body_pos, body_rot, body_vel, body_ang_vel)
         
-        root_rot = sRot.from_quat(self.mj_data.qpos[3:7])
+        root_rot = sRot.from_quat(self.mj_data.qpos[[4, 5, 6, 3]])
         root_rot_euler = root_rot.as_euler("xyz")
 
         myolegs_obs = OrderedDict()
@@ -162,7 +162,7 @@ class MyoLegsEnv(BaseEnv):
         if "root_height" in inputs:
             myolegs_obs["root_height"] = obs_dict["root_h_obs"] # 1
         if "root_tilt" in inputs:
-            myolegs_obs["root_tilt"] = np.array([np.cos(root_rot_euler[1]), np.sin(root_rot_euler[1]), np.cos(root_rot_euler[2]), np.sin(root_rot_euler[2])]) # 4
+            myolegs_obs["root_tilt"] = np.array([np.cos(root_rot_euler[0]), np.sin(root_rot_euler[0]), np.cos(root_rot_euler[1]), np.sin(root_rot_euler[1])]) # 4
         if "local_body_pos" in inputs:
             myolegs_obs["local_body_pos"] = obs_dict["local_body_pos"][0] # 3 * num_bodies
         if "local_body_rot" in inputs:
