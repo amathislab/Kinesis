@@ -371,10 +371,11 @@ class MyoLegsIm(MyoLegsTask):
         motion_return = self.get_state_from_motionlib_cache(
             self._sampled_motion_ids, self._motion_start_times, self.global_offset
         )
-        initial_rot = sRot.from_euler("XYZ", [np.pi / 2, 0, -np.pi / 2])
+        initial_rot = sRot.from_euler("XYZ", [-np.pi / 2, 0, -np.pi / 2])
         ref_qpos = motion_return.qpos.flatten()
         self.mj_data.qpos[:3] = ref_qpos[:3]
-        self.mj_data.qpos[3:7] = (initial_rot * sRot.from_quat(ref_qpos[3:7])).as_quat()
+        rotated_quat = (sRot.from_quat(ref_qpos[[4, 5, 6, 3]]) * initial_rot).as_quat()
+        self.mj_data.qpos[3:7] = np.roll(rotated_quat, 1)
         
         if self.im_eval == True:
             motion_id = self.motion_start_idx
@@ -408,7 +409,9 @@ class MyoLegsIm(MyoLegsTask):
                     self.compute_initial_pose()
 
         # Set up velocity
-        self.mj_data.qvel[:6] = motion_return.qvel.flatten()[:6]
+        ref_qvel = motion_return.qvel.flatten()[:6]
+        self.mj_data.qvel[:3] = ref_qvel[:3]
+        self.mj_data.qvel[3:6] = initial_rot.inv().apply(ref_qvel[3:6])
         self.mj_data.qvel[6:] = np.zeros_like(self.mj_data.qvel[6:])
 
         # Run kinematics
@@ -854,8 +857,8 @@ class MyoLegsIm(MyoLegsTask):
             float: The upright reward, where a value close to 1 indicates a nearly upright posture.
         """
         upright_trigs = self.proprioception['root_tilt']
-        fall_forward = np.angle(np.cos(upright_trigs[0]) + 1j * np.sin(upright_trigs[1]))
-        fall_sideways = np.angle(np.cos(upright_trigs[2]) + 1j * np.sin(upright_trigs[3]))
+        fall_forward = np.angle(upright_trigs[0] + 1j * upright_trigs[1])
+        fall_sideways = np.angle(upright_trigs[2] + 1j * upright_trigs[3])
         upright_reward = np.exp(-3 * (fall_forward ** 2 + fall_sideways ** 2))
         return upright_reward
 
