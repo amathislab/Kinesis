@@ -374,7 +374,8 @@ class MyoLegsIm(MyoLegsTask):
         initial_rot = sRot.from_euler("XYZ", [-np.pi / 2, 0, -np.pi / 2])
         ref_qpos = motion_return.qpos.flatten()
         self.mj_data.qpos[:3] = ref_qpos[:3]
-        self.mj_data.qpos[3:7] = (sRot.from_quat(ref_qpos[[4, 5, 6, 3]]) * initial_rot).as_quat(scalar_first=True)
+        rotated_quat = (sRot.from_quat(ref_qpos[[4, 5, 6, 3]]) * initial_rot).as_quat()
+        self.mj_data.qpos[3:7] = np.roll(rotated_quat, 1)
         
         if self.im_eval == True:
             motion_id = self.motion_start_idx
