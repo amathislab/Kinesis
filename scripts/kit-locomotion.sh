@@ -2,7 +2,7 @@
 
 # default values
 mode=test
-headless=False
+headless=True
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
@@ -25,21 +25,24 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $mode == "train" ]]; then
-    motion_file="data/kit_train_motion_dict.pkl"
-    initial_pose_file="data/initial_pose/initial_pose_train.pkl"
+    motion_file="data/kit_train_motion_dict_new.pkl"
+    initial_pose_file="data/initial_pose/initial_pose_train_new.pkl"
 elif [[ $mode == "test" ]]; then
-    motion_file="data/kit_test_motion_dict.pkl"
-    initial_pose_file="data/initial_pose/initial_pose_test.pkl"
+    motion_file="data/kit_test_motion_dict_new.pkl"
+    initial_pose_file="data/initial_pose/initial_pose_test_new.pkl"
 else
     echo "Invalid mode: $mode. Use 'train' or 'test'."
     exit 1
 fi
 
 # Run the script
-python src/run.py exp_name=kinesis-moe-imitation \
-    epoch=-1 \
+python src/run.py exp_name=lattice_direct_moe \
+    epoch=3000 \
     run=eval_run \
     run.headless=${headless} \
     run.motion_file=${motion_file} \
     run.initial_pose_file=${initial_pose_file} \
     env.termination_distance=0.5 \
+    run.control_mode=direct \
+    run.recording_biomechanics=False \
+    seed=0

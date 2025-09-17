@@ -189,16 +189,16 @@ class MyoLegsIm(MyoLegsTask):
                     self.viewer.user_scn,
                     np.zeros(3),
                     np.array([0.001, 0, 0]),
-                    0.05,
+                    0.02,
                     np.array([1, 0, 0, 1]),
                 )
-                add_visual_capsule(
-                    self.viewer.user_scn,
-                    np.zeros(3),
-                    np.array([0.001, 0, 0]),
-                    0.05,
-                    np.array([0, 0, 1, 1]),
-                )
+                # add_visual_capsule(
+                #     self.viewer.user_scn,
+                #     np.zeros(3),
+                #     np.array([0.001, 0, 0]),
+                #     0.0000001,
+                #     np.array([0, 0, 1, 1]),
+                # )
 
         if self.renderer is not None:
             for _ in range(len(self.track_bodies)):
@@ -206,7 +206,7 @@ class MyoLegsIm(MyoLegsTask):
                     self.viewer.user_scn,
                     np.zeros(3),
                     np.array([0.001, 0, 0]),
-                    0.05,
+                    0.02,
                     np.array([1, 0, 0, 1]),
                 )
 
@@ -398,15 +398,16 @@ class MyoLegsIm(MyoLegsTask):
             self.mj_data.qpos[:] = self.initial_pose
             mujoco.mj_kinematics(self.mj_model, self.mj_data)
         else:
+            self.compute_initial_pose()
             # During IK, the humanoid sometimes reaches unfeasible positions. If that happens, we flag the motion and remove it from the dataset.
-            if self.mj_data.qpos[2] < 0.86 or self.mj_data.qpos[2] > 1:
-                if self.motion_lib._curr_motion_ids[0] not in self.motions_to_remove:
-                    self.motions_to_remove.append(self.motion_lib._curr_motion_ids[0])
-                    print(f"Motion {self.motions_to_remove[-1]} removed")
-            else:
-                # If the motion is flagged, just skip, otherwise compute the initial pose on the fly
-                if self.motion_lib._curr_motion_ids[0] not in self.motions_to_remove:
-                    self.compute_initial_pose()
+            # if self.mj_data.qpos[2] < 0.86 or self.mj_data.qpos[2] > 1:
+            #     if self.motion_lib._curr_motion_ids[0] not in self.motions_to_remove:
+            #         self.motions_to_remove.append(self.motion_lib._curr_motion_ids[0])
+            #         print(f"Motion {self.motions_to_remove[-1]} removed")
+            # else:
+            #     # If the motion is flagged, just skip, otherwise compute the initial pose on the fly
+            #     if self.motion_lib._curr_motion_ids[0] not in self.motions_to_remove:
+            #         self.compute_initial_pose()
 
         # Set up velocity
         ref_qvel = motion_return.qvel.flatten()[:6]
@@ -959,7 +960,15 @@ class MyoLegsIm(MyoLegsTask):
             acc=0.02,
         )
 
+        print(f"Final distance to ref: {distance_to_ref(out)}")
+        self.final_distance_to_ref = distance_to_ref(out)
+
+        if self.final_distance_to_ref > 0.15:
+            print(f"Warning: Final distance to reference is too high: {self.final_distance_to_ref}.")
+            self.motions_to_remove.append(self.motion_lib._curr_motion_ids[0])
+
         self.initial_pose = np.concatenate([initial_qpos[:7], out])
+
 
     def post_physics_step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, dict]:
         """

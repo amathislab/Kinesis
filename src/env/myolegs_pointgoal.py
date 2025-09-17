@@ -98,77 +98,73 @@ class MyoLegsPointGoal(MyoLegsIm):
         """
         Retrieves motion data from the motion library and sets the initial pose.
         """
-        if self.cfg.run.test == False:
-            super().initialize_motion_state()
+        self.mj_data.qpos[:] = 0
+        self.mj_data.qvel[:] = 0
+        self.mj_data.qpos[2] = 0.94
+        self.mj_data.qpos[3:7] = np.array([0.5, 0.5, 0.5, 0.5])
 
-        else:
-            self.mj_data.qpos[:] = 0
-            self.mj_data.qvel[:] = 0
-            self.mj_data.qpos[2] = 0.94
-            self.mj_data.qpos[3:7] = np.array([0.5, 0.5, 0.5, 0.5])
+        initial_rot = sRot.from_euler("XYZ", [np.pi / 2, 0, -np.pi / 2])
+        ref_qpos = np.array(
+            [
+                0.0,
+                0.0,
+                0.9361768,
+                0.50487715,
+                0.4650055,
+                -0.50120455,
+                -0.5269373,
+            ]
+        ).astype(np.float32)
+        self.mj_data.qpos[:3] = ref_qpos[:3]
+        self.mj_data.qpos[3:7] = (initial_rot * sRot.from_quat(ref_qpos[3:7])).as_quat()
 
-            initial_rot = sRot.from_euler("XYZ", [np.pi / 2, 0, -np.pi / 2])
-            ref_qpos = np.array(
-                [
-                    0.70731837,
-                    0.6811051,
-                    0.9361768,
-                    0.50487715,
-                    0.4650055,
-                    -0.50120455,
-                    -0.5269373,
-                ]
-            ).astype(np.float32)
-            self.mj_data.qpos[:3] = ref_qpos[:3]
-            self.mj_data.qpos[3:7] = (initial_rot * sRot.from_quat(ref_qpos[3:7])).as_quat()
+        self.initial_pose = np.array(
+            [
+                0.57133061,
+                -1.21943974,
+                0.93766457,
+                0.84073663,
+                0.02309985,
+                -0.02534906,
+                0.54035704,
+                0.05718979,
+                -0.08046306,
+                -0.36137755,
+                0.00613998,
+                0.00156276,
+                0.34577042,
+                0.03181017,
+                0.15059691,
+                0.23338945,
+                0.22419988,
+                0.03759186,
+                -0.01772005,
+                0.01923135,
+                -0.11780726,
+                0.07734922,
+                -0.03445803,
+                -0.33847641,
+                -0.00639306,
+                0.00154999,
+                0.35934485,
+                0.0327628,
+                -0.16855011,
+                0.20909414,
+                0.2539858,
+                0.03759526,
+                -0.01772008,
+                0.01923106,
+                -0.11780739,
+            ]
+        ).astype(np.float32)
+        self.mj_data.qpos[7:] = self.initial_pose[7:]
 
-            self.initial_pose = np.array(
-                [
-                    0.57133061,
-                    -1.21943974,
-                    0.93766457,
-                    0.84073663,
-                    0.02309985,
-                    -0.02534906,
-                    0.54035704,
-                    0.05718979,
-                    -0.08046306,
-                    -0.36137755,
-                    0.00613998,
-                    0.00156276,
-                    0.34577042,
-                    0.03181017,
-                    0.15059691,
-                    0.23338945,
-                    0.22419988,
-                    0.03759186,
-                    -0.01772005,
-                    0.01923135,
-                    -0.11780726,
-                    0.07734922,
-                    -0.03445803,
-                    -0.33847641,
-                    -0.00639306,
-                    0.00154999,
-                    0.35934485,
-                    0.0327628,
-                    -0.16855011,
-                    0.20909414,
-                    0.2539858,
-                    0.03759526,
-                    -0.01772008,
-                    0.01923106,
-                    -0.11780739,
-                ]
-            ).astype(np.float32)
-            self.mj_data.qpos[7:] = self.initial_pose[7:]
+        # Set up velocity
+        self.mj_data.qvel[:6] = 0
+        self.mj_data.qvel[6:] = 0
 
-            # Set up velocity
-            self.mj_data.qvel[:6] = 0
-            self.mj_data.qvel[6:] = 0
-
-            # Run kinematics
-            mujoco.mj_kinematics(self.mj_model, self.mj_data)
+        # Run kinematics
+        mujoco.mj_kinematics(self.mj_model, self.mj_data)
 
     def compute_reset(self) -> Tuple[bool, bool]:
         """

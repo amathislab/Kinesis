@@ -129,6 +129,15 @@ class AgentHumanoid(AgentPPO, ABC):
             self.policy_net = PolicyMOE(
                 self.cfg, action_dim=action_dim, state_dim=state_dim, freeze=False
             )
+        # elif self.cfg.learning.actor_type == "moe_with_prev":
+        #     self.policy_net = PolicyMOEWithPrev(
+        #         self.cfg, action_dim=action_dim, state_dim=state_dim
+        #     )
+        else:
+            raise ValueError(
+                f"Unknown actor type: {self.cfg.learning.actor_type}. "
+                "Supported types are: gauss, lattice, moe, moe_finetune, moe_with_prev."
+            )
 
         to_device(self.device, self.policy_net)
 
@@ -327,7 +336,9 @@ class AgentHumanoid(AgentPPO, ABC):
         for _ in range(starting_epoch, self.cfg.learning.max_epoch):
             t0 = time.time()
             self.pre_epoch()
+            print("Sampling batch...")
             batch, loggers = self.sample(self.cfg.learning.min_batch_size)
+            print("Sampling complete.")
 
             # Update the policy and value networks
             t1 = time.time()
@@ -388,10 +399,27 @@ class AgentHumanoid(AgentPPO, ABC):
                 while True:
                     obs_dict, info = self.env.reset()
                     state = self.preprocess_obs(obs_dict)
+                    expert_idx = torch.tensor(0, device=self.device)  # Initialize expert index
                     for t in range(10000):
-                        actions = self.policy_net.select_action(
-                            torch.from_numpy(state).to(self.dtype), True
-                        )[0].numpy()
+                        if isinstance(self.policy_net, PolicyMOE):
+                            actions = self.policy_net.select_action(
+                                torch.from_numpy(state).to(self.dtype), True
+                            )
+                            actions = actions[0].numpy()
+                        # elif isinstance(self.policy_net, PolicyMOEWithPrev):
+                        #     expert_idx_oh = torch.nn.functional.one_hot(
+                        #         expert_idx, num_classes=self.cfg.num_experts
+                        #     ).float()
+                        #     actions, expert_idx = self.policy_net.select_action(
+                        #         torch.from_numpy(state).to(self.dtype),
+                        #         expert_idx_oh,
+                        #         True,
+                        #     )
+                        #     actions = actions[0].numpy()
+                        else:
+                            actions = self.policy_net.select_action(
+                                torch.from_numpy(state).to(self.dtype), True
+                            )[0].numpy()
 
                         next_obs, reward, terminated, truncated, info = self.env.step(
                             self.preprocess_actions(actions)
@@ -400,6 +428,7 @@ class AgentHumanoid(AgentPPO, ABC):
                         done = terminated or truncated
 
                         if done:
+                            print(f"{not terminated}, {self.env.mpjpe_value}, {self.env.frame_coverage}")
                             break
                         state = next_state
         res_dicts = {}

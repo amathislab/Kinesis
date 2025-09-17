@@ -117,18 +117,24 @@ class BaseEnv(gym.Env):
             If render mode is "rgb_array", returns the rendered pixels as an array.
         """
         if not self.headless:
-            if self.viewer is None and self.renderer is None:
+            if self.viewer is None:
                 self.create_viewer()
             
-            if self.render_mode == "human":
+            if self.render_mode == "human" and self.viewer is not None:
                 self.viewer.sync()
                 if self.follow:
                     self.viewer.cam.lookat = self.mj_data.qpos[:3]
                 if not self.fast_forward:
-                    time.sleep(1. / 100)
+                    time.sleep(1. / 200)
             
-            if self.render_mode == "rgb_array":
-                self.renderer.update_scene(self.mj_data, camera=self.camera)
+            if self.render_mode == "rgb_array" and self.renderer is not None:
+                # Sync the viewer window
+                self.viewer.sync()
+                
+                # Copy camera and visualization options
+                camera = self.viewer.cam
+                scene_option = self.viewer.opt
+                self.renderer.update_scene(self.mj_data, camera=camera, scene_option=scene_option)
                 pixels = self.renderer.render()
                 return pixels
 
@@ -160,15 +166,18 @@ class BaseEnv(gym.Env):
         self.mj_model.opt.timestep = self.sim_timestep
 
     def _create_renderer(self):
-        self.renderer = mujoco.Renderer(self.mj_model)  # MJ offline renderer
+        self.renderer = mujoco.Renderer(self.mj_model, height=int(4320 / 2), width=int(7680 / 2))  # MJ offline renderer
         mujoco.mj_forward(self.mj_model, self.mj_data)
         self.renderer.update_scene(self.mj_data)
 
     def create_viewer(self):
-        if not self.headless and self.render_mode == "human":
-            self.viewer = mujoco.viewer.launch_passive(self.mj_model, self.mj_data, key_callback=self.key_callback)
-            
-        if not self.headless and self.render_mode == "rgb_array":
+        self.viewer = mujoco.viewer.launch_passive(self.mj_model, self.mj_data, key_callback=self.key_callback)
+        camera_id = mujoco.mj_name2id(self.mj_model, mujoco.mjtObj.mjOBJ_CAMERA, "diagonal")
+        self.viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
+        self.viewer.cam.fixedcamid = camera_id
+        # self.viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_ACTUATOR] = True
+
+        if self.render_mode == "rgb_array":
             self._create_renderer()
 
     def key_callback(self, keycode):

@@ -36,26 +36,29 @@ class AgentPointGoal(AgentIM):
         self.env = MyoLegsPointGoal(self.cfg)
         logger.info("PointGoal environment initialized.")
 
-    def eval_policy(self, epoch = 0, dump = False, runs = 100):
+    def eval_policy(self, epoch = 0, dump = False, runs = 5000):
         logger.info("Starting policy evaluation on target goal reaching.")
         self.env.start_eval(im_eval=True)
 
         to_test(*self.sample_modules)
 
-        success_list = []
-        last_reward_list = []
+        goal_pos_list = []
+        result_list = []
 
         with to_cpu(*self.sample_modules), torch.no_grad():
             for i in range(runs):
-                result, last_reward = self.eval_single_thread()
-                print(f"Episode {i} result: {result}")
-                success_list.append(result)
-                last_reward_list.append(last_reward)
+                goal_pos, result = self.eval_single_thread()
+                print(f"{i}: Goal pos {goal_pos} --- result: {result}")
+                goal_pos_list.append(goal_pos.copy())
+                result_list.append(result)
 
-        success_rate = np.mean(success_list)
+        success_rate = np.mean(result_list)
         logger.info(f"Policy evaluation success rate: {success_rate}")
 
-        return success_rate, last_reward_list
+        np.save("target_goal_pos.npy", np.array(goal_pos_list))
+        np.save("target_result.npy", np.array(result_list))
+
+        return success_rate, result_list
     
     def eval_single_thread(self) -> Tuple[bool, float]:
         """
@@ -78,8 +81,8 @@ class AgentPointGoal(AgentIM):
                 done = terminated or truncated
 
                 if done:                      
-                    return not terminated, reward
+                    return self.env.goal_pos, not terminated
                 state = next_state
 
         # If the loop exits without termination, consider it a failure
-        return False, reward
+        return self.env.goal_pos, False

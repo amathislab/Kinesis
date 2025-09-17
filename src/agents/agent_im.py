@@ -11,9 +11,12 @@ import os
 import torch
 import numpy as np
 import logging
+import skvideo.io
+import glfw
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
+from src.learning.policy_moe import PolicyMOE
 from src.agents.agent_humanoid import AgentHumanoid
 from src.learning.learning_utils import to_test, to_cpu
 from src.env.myolegs_im import MyoLegsIm
@@ -93,51 +96,64 @@ class AgentIM(AgentHumanoid):
         # Set networks to evaluation mode
         to_test(*self.sample_modules)
 
-        success_dict = {}
-        mpjpe_dict = {}
-        frame_coverage_dict = {}
+        for trials in range(3):
+            print(f"Running trial {trials + 1}...")
 
-        if runs is not None:
-            run_ctr = 0
+            success_dict = {}
+            mpjpe_dict = {}
+            frame_coverage_dict = {}
 
-        with to_cpu(*self.sample_modules), torch.no_grad():
-            for run_idx in self.env.forward_motions():
-                success = False
-                for attempt in range(1):
-                    result, mpjpe, frame_coverage = self.eval_single_thread()
-                    if result is True:
-                        success = True
-                        logger.info(f"Run {run_idx}: Success on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage * 100:.5f}")
-                    else:
-                        success = False
-                        logger.info(f"Run {run_idx}: Failure on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage[0] * 100:.5f}")
-                    success_dict[run_idx] = success
-                    mpjpe_dict[run_idx] = mpjpe
-                    frame_coverage_dict[run_idx] = frame_coverage
-                if runs is not None:
-                    run_ctr += 1
-                    if run_ctr >= runs:
-                        break
-                
-        success_rate = np.mean(list(success_dict.values()))
-        mean_mpjpe = np.mean(list(mpjpe_dict.values()))
-        mean_frame_coverage = np.mean(list(frame_coverage_dict.values()))
-        failed_keys = [k for k, v in success_dict.items() if not v]
-        success_keys = [k for k, v in success_dict.items() if v]
-        print(f"Success Rate: {success_rate * 100:.5f}")
-        print("Mean MPJPE: ", mean_mpjpe * 1000)
-        print("Mean frame coverage: ", mean_frame_coverage * 100)
+            if runs is not None:
+                run_ctr = 0
 
-        # save failed keys
-        if dump:
-            os.makedirs("data/dumps", exist_ok=True)
-            failed_keys = np.array(failed_keys)
-            np.save(f"data/dumps/failed_keys_{self.cfg.epoch}.npy", failed_keys)
+            # Load extracted indices
+            if self.cfg.run.recording_biomechanics:
+                extracted_indices = np.load(f"data/extracted_keys/medium_indices.npy")
 
-        if self.env.recording_biomechanics:
+            with to_cpu(*self.sample_modules), torch.no_grad():
+                for run_idx in self.env.forward_motions():
+                    if self.cfg.run.recording_biomechanics and run_idx not in extracted_indices:
+                        logger.info(f"Skipping run {run_idx} as it is not in the extracted indices.")
+                        continue
+                    success = False
+                    for attempt in range(1):
+                        result, mpjpe, frame_coverage = self.eval_single_thread()
+                        if result is True:
+                            success = True
+                            print(f"Run {run_idx}: Success on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage * 100:.5f}")
+                        else:
+                            success = False
+                            print(f"Run {run_idx}: Failure on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage[0] * 100:.5f}")
+                        success_dict[run_idx] = success
+                        mpjpe_dict[run_idx] = mpjpe
+                        frame_coverage_dict[run_idx] = frame_coverage
+                    if runs is not None:
+                        run_ctr += 1
+                        if run_ctr >= runs:
+                            break
+                    
+            success_rate = np.mean(list(success_dict.values()))
+            mean_mpjpe = np.mean(list(mpjpe_dict.values()))
+            mean_frame_coverage = np.mean(list(frame_coverage_dict.values()))
+            failed_keys = [k for k, v in success_dict.items() if not v]
+            success_keys = [k for k, v in success_dict.items() if v]
+            print(f"Success Rate: {success_rate * 100:.5f}")
+            print("Mean MPJPE: ", mean_mpjpe * 1000)
+            print("Mean frame coverage: ", mean_frame_coverage * 100)
             breakpoint()
-            print("Saving recorded biomechanics data.")
+
+            # save failed keys
+            if dump:
+                os.makedirs("data/dumps", exist_ok=True)
+                failed_keys = np.array(failed_keys)
+                np.save(f"data/dumps/failed_keys_lattice_direct_expert_0.npy", failed_keys)
             
+        if self.cfg.run.recording_biomechanics:
+            save_dir = f"data/emg_assets/kinesis_{self.cfg.exp_name}_medium_with_joints"
+            os.makedirs(save_dir, exist_ok=True)
+            np.save(f"{save_dir}/feet.npy", self.env.feet)
+            np.save(f"{save_dir}/muscle_controls.npy", self.env.muscle_controls)
+            np.save(f"{save_dir}/joint_positions.npy", self.env.joint_pos)
 
         return mpjpe_dict, success_rate
 
@@ -149,20 +165,57 @@ class AgentIM(AgentHumanoid):
         Returns:
             bool: True if the episode terminated successfully, False otherwise.
         """
+        frames = []
         with to_cpu(*self.sample_modules), torch.no_grad():
             obs_dict, info = self.env.reset()
             state = self.preprocess_obs(obs_dict)
+            expert_idx = torch.tensor(0, dtype=torch.int64).to(self.device)  # Initialize expert index
             for t in range(10000):
-                actions = self.policy_net.select_action(
-                    torch.from_numpy(state).to(self.dtype), True
-                )[0].numpy()
+                if isinstance(self.policy_net, PolicyMOE):
+                            actions = self.policy_net.select_action(
+                                torch.from_numpy(state).to(self.dtype), True
+                            )
+                            actions = actions[0].numpy()
+                # elif isinstance(self.policy_net, PolicyMOEWithPrev):
+                #     expert_idx_oh = torch.nn.functional.one_hot(
+                #         expert_idx, num_classes=self.cfg.num_experts
+                #     ).float()
+                #     actions, expert_idx = self.policy_net.select_action(
+                #         torch.from_numpy(state).to(self.dtype),
+                #         expert_idx_oh,
+                #         True,
+                #     )
+                #     actions = actions[0].numpy()
+                else:
+                    # For non-MoE policies, select action directly
+                    actions = self.policy_net.select_action(
+                        torch.from_numpy(state).to(self.dtype), True
+                    )[0].numpy()
                 next_obs, reward, terminated, truncated, info = self.env.step(
                     self.preprocess_actions(actions)
                 )
+                if self.env.render_mode == "rgb_array":
+                    frame = self.env.render()
+                    frames.append(frame)
                 next_state = self.preprocess_obs(next_obs)
                 done = terminated or truncated
 
-                if done:                      
+                if done:
+                    if self.env.render_mode == "rgb_array" and len(frames) > 0:
+                        fps = str(30)
+                        if hasattr(self.env, 'motion_lib'):
+                            video_name = f"data/videos/{self.env.motion_lib.curr_motion_keys[0]}_white.mkv"
+                        else:
+                            video_name = f"data/videos/_episode.mkv"
+                        skvideo.io.vwrite(
+                            video_name, 
+                            frames, 
+                            inputdict={'-r': str(fps)}, 
+                            outputdict={
+                                '-vcodec': 'ffv1',
+                                '-pix_fmt': 'yuv420p'
+                            }
+                        )                     
                     return not terminated, self.env.mpjpe_value, self.env.frame_coverage
                 state = next_state
 

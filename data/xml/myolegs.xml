@@ -13,29 +13,30 @@
   <default>
     <joint damping="0.0" armature="0.01" stiffness="0.0" limited="true"/>
     <geom conaffinity="1" condim="3" contype="7" margin="0.001" rgba="0.8 0.6 .4 1"/>
-    <tendon width="0.006"/>
+    <!-- <tendon width="0.006"/> -->
   </default>
   <asset>
-    <texture type="skybox" builtin="gradient" rgb1=".4 .5 .6" rgb2="0 0 0" width="100" height="100"/>
-    <!-- <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="100" height="100"/> -->
+    <!-- <texture type="skybox" builtin="gradient" rgb1=".4 .5 .6" rgb2="0 0 0" width="100" height="100"/> -->
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="100" height="100"/>
 
     <!-- <texture type="skybox" file="nebulae.png" gridsize="3 4" gridlayout=".U..LFRB.D.."/> -->
     <texture builtin="flat" height="1278" mark="cross" markrgb="1 1 1" name="texgeom" random="0.01" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" type="cube" width="127"/>
     <texture builtin="checker" height="100" name="texplane" rgb1="0.2549 0.3765 0.5098" rgb2="0.10588 0.2117 0.3215" type="2d" width="100"/>
     <!-- <texture builtin="checker" height="100" name="texplane" rgb1="1 1 1" rgb2="1 1 1" type="2d" width="100"/> -->
+    <!-- <texture builtin="checker" height="100" name="white" rgb1="1 1 1" rgb2="1 1 1" type="2d" width="100"/> -->
 
-    <material name="MatPlane" reflectance="0.8" shininess="1" specular="1" texrepeat="60 60" texture="texplane"/>
+    <material name="MatPlane" reflectance="0.0" shininess="1" specular="1" texrepeat="10 10" texture="texplane"/>
     <material name="geom" texture="texgeom" texuniform="true"/>
   </asset>
 
   <visual>
-    <map haze="0.8"/>
-    <rgba haze="0 0 0 1"/>
+    <global offwidth="7680" offheight="4320"/>
   </visual>
 
   <worldbody>
+    <camera name="diagonal" pos="-9.056 -5.039 4.212" xyaxes="0.482 -0.876 0.000 0.446 0.245 0.861"/>
     <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
-    <geom conaffinity="1" condim="3" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="100 100 .2" type="plane" material="MatPlane"/>
+    <geom conaffinity="1" condim="3" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="5 5 .2" type="plane" material="MatPlane"/>
     <site name="pelvis_target" size="0.02" pos="0 0 .92" group="4"/>
     <body name="root" pos="0 0 1" euler="0 0 -1.57">
         <body name="torso" childclass="myotorso" pos="0 0 0">

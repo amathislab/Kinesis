@@ -64,9 +64,11 @@ def main(cfg: DictConfig) -> None:
     print(f"Using: {device}, setting to deterministic")
     np.random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    torch.use_deterministic_algorithms(True)
+    
+    if cfg.learning.actor_type not in  ["moe", "moe_with_prev"]:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
 
     # breakpoint()
     agent = agent_dict[cfg.learning.agent_name](

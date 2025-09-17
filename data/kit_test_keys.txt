@@ -27,14 +27,12 @@
 0-KIT_348_turn_right02_poses
 0-KIT_424_walking_slow05_poses
 0-KIT_9_RightTurn03_poses
-0-KIT_3_walking_fast09_poses
 0-KIT_424_walking_run02_poses
 0-KIT_317_turn_right05_poses
 0-KIT_424_turn_left02_poses
 0-KIT_3_walking_slow07_poses
 0-KIT_4_RightTurn07_poses
 0-KIT_10_WalkInClockwiseCircle02_poses
-0-KIT_424_turn_left03_poses
 0-KIT_291_walking03_poses
 0-KIT_183_turn_right09_poses
 0-KIT_12_WalkingStraightForwards01_1_poses
@@ -50,8 +48,8 @@
 0-KIT_167_walking_slow07_poses
 0-KIT_8_WalkingStraightForwards09_poses
 0-KIT_4_RightTurn06_poses
+0-KIT_6_WalkingStraightBackwards02_poses
 0-KIT_205_walking_run04_poses
-0-KIT_317_walking_fast04_poses
 0-KIT_183_walking_fast04_poses
 0-KIT_317_walking_fast02_poses
 0-KIT_425_turn_right02_poses
@@ -101,9 +99,10 @@
 0-KIT_4_WalkInClockwiseCircle05_poses
 0-KIT_424_walking_fast07_poses
 0-KIT_424_turn_left04_poses
-0-KIT_317_walking_fast01_poses
 0-KIT_675_walk_with_handrail_beam_right03_poses
 0-KIT_314_walking_run04_poses
 0-KIT_317_walking_run06_poses
 0-KIT_167_turn_right09_poses
 0-KIT_425_walking_fast06_poses
+0-KIT_4_WalkingStraightBackwards05_poses
+0-KIT_8_WalkingStraightBackwards09_poses

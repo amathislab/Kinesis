@@ -46,16 +46,18 @@ def eval_imitation(eval_cfg: DictConfig, exp_name: str, epoch: int = -1, expert:
     eval_cfg.output_dir = f"data/trained_models/{exp_name}"
     eval_cfg.epoch = epoch
     eval_cfg.run.headless = True
+    eval_cfg.run.control_mode = "direct"
     eval_cfg.learning.actor_type = "lattice"
 
     if expert == 0:
-        eval_cfg.run.motion_file = "data/kit_train_motion_dict.pkl"
-        eval_cfg.run.initial_pose_file = "data/initial_pose/initial_pose_train.pkl"
+        eval_cfg.run.motion_file = "data/kit_train_motion_dict_new.pkl"
+        eval_cfg.run.initial_pose_file = "data/initial_pose/initial_pose_train_new.pkl"
     else:
-        if os.path.exists(f"data/kit_train_motion_dict_expert_{expert}.pkl") and os.path.exists(f"data/initial_pose/initial_pose_train_expert_{expert}.pkl"):
-            eval_cfg.run.motion_file = f"data/kit_train_motion_dict_expert_{expert}.pkl"
-            eval_cfg.run.initial_pose_file = f"data/initial_pose/initial_pose_train_expert_{expert}.pkl"
+        if os.path.exists(f"data/kit_train_motion_dict_direct_expert_{expert}.pkl") and os.path.exists(f"data/initial_pose/initial_pose_train_direct_expert_{expert}.pkl"):
+            eval_cfg.run.motion_file = f"data/kit_train_motion_dict_direct_expert_{expert}.pkl"
+            eval_cfg.run.initial_pose_file = f"data/initial_pose/initial_pose_train_direct_expert_{expert}.pkl"
         else:
+            breakpoint()
             raise FileNotFoundError(
                 f"Motion file or initial pose file for expert {expert} does not exist."
             )
@@ -68,7 +70,9 @@ def eval_imitation(eval_cfg: DictConfig, exp_name: str, epoch: int = -1, expert:
 
     print(f"Success rate: {success}")
 
-    failed_keys = np.load(f"data/dumps/failed_keys_{agent.cfg.epoch}.npy")
+    breakpoint()
+
+    failed_keys = np.load(f"data/dumps/failed_keys_lattice_direct_expert_2.npy")
 
     if len(failed_keys) == 0:
         print("No failed keys found. Exiting.")
@@ -95,11 +99,11 @@ def eval_imitation(eval_cfg: DictConfig, exp_name: str, epoch: int = -1, expert:
     # save the negative mined motion data and initial position data
     joblib.dump(
         negative_mined_motion_dict,
-        f"data/kit_train_motion_dict_expert_{expert + 1}.pkl"
+        f"data/kit_train_motion_dict_direct_expert_{expert + 1}.pkl"
     )
     joblib.dump(
         negative_mined_initial_pos_data,
-        f"data/initial_pose/initial_pose_train_expert_{expert + 1}.pkl"
+        f"data/initial_pose/initial_pose_train_direct_expert_{expert + 1}.pkl"
     )
 
     # copy the saved checkpoint to a new folder

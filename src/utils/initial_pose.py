@@ -15,15 +15,16 @@ import numpy as np
 
 @hydra.main(
     version_base=None,
-    config_path="../data/cfg",
+    config_path="../../cfg",
     config_name="config",
 )
 def main(cfg):
     initial_pose_dict = {}
     env = MyoLegsIm(cfg)
     env.initial_pos_data = {}
+    final_distances = []
     
-    for motion_step in range(cfg.run.num_motions):
+    for motion_step in range(108):
         env.motion_lib.load_motions(
             env.motion_lib_cfg,
             shape_params=env.gender_betas,
@@ -38,6 +39,11 @@ def main(cfg):
             env.reset(options={'start_time': start_time})
             initial_pose_dict[env.motion_lib._curr_motion_ids[0]][start_time] = env.initial_pose
             env.initial_pose = None
+            final_distances.append(env.final_distance_to_ref)
+
+    print(f'Final distances average: {np.mean(final_distances)} +/- {np.std(final_distances)}')
+
+    print(f"Motions to remove: {env.motions_to_remove}")
 
     # Fix the keys
     new_data = {}
@@ -46,9 +52,9 @@ def main(cfg):
         for frame_key in initial_pose_dict[motion_key].keys():
             new_key = np.round(frame_key, 1)
             new_data[motion_key][new_key] = initial_pose_dict[motion_key][frame_key]
-            print(f'Old key: {frame_key}, New key: {new_key}')
+            # print(f'Old key: {frame_key}, New key: {new_key}')
 
-    joblib.dump(new_data, f'data/initial_pose/initial_pose_{cfg.exp_name}.pkl')
+    joblib.dump(new_data, f'data/initial_pose/initial_pose_test_new.pkl')
 
 if __name__ == "__main__":
     main()

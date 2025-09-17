@@ -28,7 +28,7 @@ task_inputs: ["diff_local_body_pos", "diff_local_vel", "local_ref_body_pos"]
 
 # File paths -- change accordingly
 xml_path: "data/xml/myolegs.xml"
-motion_file: "data/amass_isaac_im_train.pkl"
+motion_file: "data/amass_isaac_im_test.pkl"
 smpl_data_dir: "data/smpl"
 initial_pose_file: "data/initial_pose/full_initial_pose_dict.pkl"
 custom_motion_key_file: "data/motion_keys/kit_final_indices_train.npy"

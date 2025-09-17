@@ -9,3 +9,4 @@ python src/run.py exp_name=kinesis-moe-imitation \
     run=t2m \
     run.motion_file=${motion_file} \
     env.termination_distance=0.5 \
+    run.fast_forward=True
