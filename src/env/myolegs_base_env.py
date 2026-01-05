@@ -17,6 +17,7 @@ import mujoco
 import time
 from typing import Optional
 
+terrain_rng = np.random.RandomState(0)
 
 class BaseEnv(gym.Env):
 
@@ -32,6 +33,12 @@ class BaseEnv(gym.Env):
         self.dt = self.sim_timestep * self.control_freq_inv # control time step
         self.fast_forward = cfg.run.fast_forward # "fast forward the simulation"
         # self.sim_timestep_inv / self.control_freq_inv should be 30.0
+
+        # Heightfield noise scale
+        if hasattr(cfg.env, 'terrain_noise_scale'):
+            self.terrain_noise_scale = cfg.env.terrain_noise_scale
+        else:
+            self.terrain_noise_scale = 0.0
 
         # ... various rendering parameters
         self.viewer = None
@@ -53,7 +60,17 @@ class BaseEnv(gym.Env):
             tuple: A tuple containing the observation and info after the reset.
         """
         super().reset(seed=seed, options=options)
+
         self.cur_t = 0
+
+        if self.terrain_noise_scale > 0:
+            self.randomize_terrain(self.mj_model, noise_scale=self.terrain_noise_scale)  # Randomize terrain if needed
+                    
+            # Update the simulation after modifying the model
+            mujoco.mj_forward(self.mj_model, self.mj_data)
+
+            if self.viewer is not None:
+                self.viewer.update_hfield(hfieldid=0)
 
         observation = self.compute_observations()
         info = {}
@@ -120,14 +137,14 @@ class BaseEnv(gym.Env):
             if self.viewer is None and self.renderer is None:
                 self.create_viewer()
             
-            if self.render_mode == "human":
+            if self.render_mode == "human" and self.viewer is not None:
                 self.viewer.sync()
                 if self.follow:
                     self.viewer.cam.lookat = self.mj_data.qpos[:3]
                 if not self.fast_forward:
                     time.sleep(1. / 100)
             
-            if self.render_mode == "rgb_array":
+            if self.render_mode == "rgb_array" and self.renderer is not None:
                 self.renderer.update_scene(self.mj_data, camera=self.camera)
                 pixels = self.renderer.render()
                 return pixels
@@ -184,3 +201,11 @@ class BaseEnv(gym.Env):
         elif chr(keycode) == "F":
             self.follow = not self.follow
             print(f"Follow {self.follow}")
+
+    @staticmethod
+    def randomize_terrain(model, noise_scale=0.05):
+        if hasattr(model, 'hfield_data'):
+            hfield_size = model.hfield_data.shape
+            noise = terrain_rng.uniform(-noise_scale, noise_scale, hfield_size)
+            # Use copy to ensure the data is properly assigned
+            model.hfield_data[:] = noise
