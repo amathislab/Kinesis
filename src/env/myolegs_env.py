@@ -12,16 +12,22 @@
 import os
 import sys
 from typing import List, Tuple
+
+from omegaconf import DictConfig
 sys.path.append(os.getcwd())
 
+import hydra
 import numpy as np
 from collections import OrderedDict
 import gymnasium as gym
 import mujoco
+import mujoco.viewer
 from scipy.spatial.transform import Rotation as sRot
 
 from src.env.myolegs_base_env import BaseEnv
 import src.utils.np_transform_utils as npt_utils
+
+from src.fatigue.myosuite_fatigue import CumulativeFatigue
 
 
 class MyoLegsEnv(BaseEnv):
@@ -43,10 +49,19 @@ class MyoLegsEnv(BaseEnv):
         )
         
         self.action_space = gym.spaces.Box(
-            low=-np.ones(80),
-            high=np.ones(80),
+            low=-np.ones(self.mj_model.nu),
+            high=np.ones(self.mj_model.nu),
             dtype=self.dtype,
         )
+
+        self.muscle_condition = cfg.run.muscle_condition
+        if self.muscle_condition == "fatigue":
+            self.config_fatigue()
+
+    def config_fatigue(self):
+        self.fatigue = CumulativeFatigue(self.mj_model, 
+                                         1)
+        
 
     def setup_configs(self, cfg) -> None:
         """
@@ -126,6 +141,8 @@ class MyoLegsEnv(BaseEnv):
             tally += self.mj_model.nu
         if "feet_contacts" in inputs:
             tally += 4
+        if self.cfg.run.muscle_condition == "fatigue" and self.cfg.run.fatigue_aware:
+            tally += self.mj_model.nu
 
         return tally
 
@@ -179,6 +196,10 @@ class MyoLegsEnv(BaseEnv):
             myolegs_obs["muscle_force"] = np.nan_to_num(self.mj_data.actuator_force.copy()) # num_actuators
         if "feet_contacts" in inputs:
             myolegs_obs["feet_contacts"] = self.get_touch() # 4
+
+        if self.muscle_condition == "fatigue" and self.cfg.run.fatigue_aware:
+            myolegs_obs["muscle_fatigue"] = self.fatigue.MF
+
         self.proprioception = myolegs_obs
 
         return np.concatenate([v.ravel() for v in myolegs_obs.values()], axis=0, dtype=self.dtype)
@@ -285,13 +306,16 @@ class MyoLegsEnv(BaseEnv):
 
                 elif self.control_mode == "direct":
                     muscle_activity = (action + 1.0) / 2.0
+                    if self.muscle_condition == "fatigue":
+                        muscle_activity = self.fatigue.compute_act(muscle_activity)[0]
 
                 else:
                     raise NotImplementedError
                   
                 self.mj_data.ctrl[:] = muscle_activity
                 mujoco.mj_step(self.mj_model, self.mj_data)
-                self.curr_power_usage.append(self.compute_energy_reward(muscle_activity))
+                if hasattr(self, "compute_energy_reward"):
+                    self.curr_power_usage.append(self.compute_energy_reward(muscle_activity))
     
     def deactivate_muscles(self, muscle_activity: np.ndarray, targetted_muscles: List[str]) -> np.ndarray:
         """
@@ -357,6 +381,10 @@ class MyoLegsEnv(BaseEnv):
         mujoco.mj_forward(self.mj_model, self.mj_data)
 
     def reset(self, seed=None, options=None):
+        if self.muscle_condition == "fatigue":
+            generator = np.random.default_rng()
+            random_fatigue_state = generator.uniform(0, self.cfg.run.init_fatigue, size=self.fatigue.na)
+            self.fatigue.reset(fatigue_reset_vec=random_fatigue_state)
         self.reset_myolegs()
         self.forward_sim()
         return super().reset(seed=seed, options=options)
@@ -541,3 +569,26 @@ def action_to_target_length(action: np.ndarray, model) -> list:
         lo = 0
         target_lengths.append((action[idx_actuator] + 1) / 2 * (hi - lo) + lo)
     return target_lengths
+
+@hydra.main(
+    version_base=None,
+    config_path="../../cfg",
+    config_name="config_full_upper",
+)
+def main(cfg: DictConfig) -> None:
+    """
+    Main function to run the MyoLegs environment with random actions.
+    """
+
+    env = MyoLegsEnv(cfg)
+    env.reset()
+    
+    for _ in range(1000):
+        obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
+        if terminated or truncated:
+            obs, info = env.reset()
+
+    env.close()
+
+if __name__ == "__main__":
+    main()
