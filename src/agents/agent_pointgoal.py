@@ -40,6 +40,8 @@ class AgentPointGoal(AgentIM):
         logger.info("Starting policy evaluation on target goal reaching.")
         self.env.start_eval(im_eval=True)
 
+        self.env.sample_motions()
+
         to_test(*self.sample_modules)
 
         success_list = []
