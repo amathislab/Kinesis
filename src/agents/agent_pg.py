@@ -13,6 +13,7 @@ from typing import Optional
 import torch
 import logging
 
+from src.learning.policy_moe import PolicyMOEWithPrev
 from src.learning.learning_utils import to_train, to_test
 from src.learning.learning_utils import estimate_advantages
 from src.agents.agent import Agent
@@ -54,20 +55,26 @@ class AgentPG(Agent):
         self.opt_num_epochs = opt_num_epochs
         self.value_opt_niter = value_opt_niter
 
-    def update_value(self, states: torch.Tensor, returns: torch.Tensor) -> None:
+    def update_value(self, states: torch.Tensor, returns: torch.Tensor) -> float:
         """
         Update the critic (value network) by minimizing the MSE between predicted values and returns.
 
         Args:
             states (torch.Tensor): Tensor of states.
             returns (torch.Tensor): Tensor of target returns.
+
+        Returns:
+            float: The average value loss.
         """
+        value_loss_val = 0.0
         for _ in range(self.value_opt_niter):
             values_pred = self.value_net(states)
             value_loss = (values_pred - returns).pow(2).mean()
             self.optimizer_value.zero_grad()
             value_loss.backward()
             self.optimizer_value.step()
+            value_loss_val += value_loss.item()
+        return value_loss_val / self.value_opt_niter
 
     def update_policy(
         self,
@@ -76,7 +83,8 @@ class AgentPG(Agent):
         returns: torch.Tensor,
         advantages: torch.Tensor,
         exps: torch.Tensor,
-    ) -> None:
+        expert_indices: Optional[torch.Tensor] = None
+    ) -> dict:
         """
         Update the policy network using advantage-weighted log probabilities.
 
@@ -86,15 +94,34 @@ class AgentPG(Agent):
             returns (torch.Tensor): Tensor of target returns.
             advantages (torch.Tensor): Tensor of advantage estimates.
             exps (torch.Tensor): Tensor indicating exploration flags.
+            expert_indices (Optional[torch.Tensor]): Tensor of expert indices for actions, if applicable.
+
+        Returns:
+            dict: Dictionary containing training metrics.
         """
         # use a2c by default
         ind = exps.nonzero().squeeze(1)
+        policy_loss_val = 0.0
+        value_loss_val = 0.0
+
         for _ in range(self.opt_num_epochs):
             # Update critic
-            self.update_value(states, returns)
+            value_loss_val += self.update_value(states, returns)
 
             # Calculate log probabilities of selected actions
-            log_probs = self.policy_net.get_log_prob(states[ind], actions[ind])
+            if isinstance(self.policy_net, PolicyMOEWithPrev):
+                prev_expert_indices = torch.cat(
+                (torch.zeros(1, dtype=torch.int64).to(self.device), expert_indices[ind][:-1]),
+                dim=0
+                )
+                prev_expert_indices = torch.nn.functional.one_hot(
+                    prev_expert_indices, num_classes=self.cfg.num_experts
+                ).float()
+                log_probs = self.policy_net.get_log_prob(states[ind], prev_expert_indices, expert_indices[ind])
+            elif expert_indices is not None:
+                log_probs = self.policy_net.get_log_prob(states[ind], expert_indices[ind])
+            else:
+                log_probs = self.policy_net.get_log_prob(states[ind], actions[ind])
 
             # Calculate the loss as the negative log probability times the advantage
             policy_loss = -(log_probs * advantages[ind]).mean()
@@ -103,8 +130,21 @@ class AgentPG(Agent):
             self.optimizer_policy.zero_grad()
             policy_loss.backward()
             self.optimizer_policy.step()
+            policy_loss_val += policy_loss.item()
 
-    def update_params(self, batch) -> float:
+        mean_log_std = 0.0
+        if hasattr(self.policy_net, "action_log_std"):
+            mean_log_std = self.policy_net.action_log_std.mean().item()
+        elif hasattr(self.policy_net, "log_std"):
+            mean_log_std = self.policy_net.log_std.mean().item()
+
+        return {
+            "policy_loss": policy_loss_val / self.opt_num_epochs,
+            "value_loss": value_loss_val / self.opt_num_epochs,
+            "mean_log_std": mean_log_std
+        }
+
+    def update_params(self, batch) -> dict:
         """
         Perform parameter updates for both policy and value networks using the collected batch.
 
@@ -112,8 +152,9 @@ class AgentPG(Agent):
             batch: A batch of collected experiences containing states, actions, rewards, masks, and exploration flags.
 
         Returns:
-            float: Time taken to perform the parameter updates.
+            dict: Dictionary containing training metrics and update time.
         """
+        print("Updating parameters...")
         t0 = time.time()
         # Set the modules to training mode
         to_train(*self.update_modules)
@@ -124,6 +165,10 @@ class AgentPG(Agent):
         rewards = torch.from_numpy(batch.rewards).to(self.dtype).to(self.device)
         masks = torch.from_numpy(batch.masks).to(self.dtype).to(self.device)
         exps = torch.from_numpy(batch.exps).to(self.dtype).to(self.device)
+        if hasattr(self.policy_net, "experts"):
+            expert_indices = torch.from_numpy(batch.expert_indices).to(self.dtype).to(self.device)
+        else:
+            expert_indices = None
 
         # Compute value estimates for the states without gradient tracking
         with to_test(*self.update_modules):
@@ -135,6 +180,7 @@ class AgentPG(Agent):
             rewards, masks, values, self.gamma, self.tau
         )
 
-        self.update_policy(states, actions, returns, advantages, exps)
+        metrics = self.update_policy(states, actions, returns, advantages, exps, expert_indices)
+        metrics["update_time"] = time.time() - t0
 
-        return time.time() - t0
+        return metrics
