@@ -14,6 +14,7 @@ import logging
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
+from src.learning.policy_moe import PolicyMOE, PolicyMOEWithPrev
 from src.agents.agent_humanoid import AgentHumanoid
 from src.learning.learning_utils import to_test, to_cpu
 from src.env.myolegs_im import MyoLegsIm
@@ -64,8 +65,9 @@ class AgentIM(AgentHumanoid):
         """
         Performs operations before each training epoch, such as resampling motions.
         """
-        if (self.epoch > 1) and self.epoch % self.cfg.env.resampling_interval == 1: # + 1 to evade the evaluations. 
-            self.env.sample_motions()
+        if (self.epoch > 1) and self.epoch % self.cfg.env.resampling_interval == 1: # + 1 to evade the evaluations.
+            if self.cfg.run.num_motions > 0:
+                self.env.sample_motions()
         return super().pre_epoch()
     
     def setup_env(self):
@@ -75,7 +77,7 @@ class AgentIM(AgentHumanoid):
         self.env = MyoLegsIm(self.cfg)
         logger.info("MyoLegsIm environment initialized.")
 
-    def eval_policy(self, epoch: int = 0, dump: bool = False, runs = None) -> float:
+    def eval_policy(self, epoch: int = 0, dump: bool = True, runs = None) -> float:
         """
         Evaluates the current policy by running multiple episodes and computing success rates.
 
@@ -107,10 +109,10 @@ class AgentIM(AgentHumanoid):
                     result, mpjpe, frame_coverage = self.eval_single_thread()
                     if result is True:
                         success = True
-                        logger.info(f"Run {run_idx}: Success on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage * 100:.5f}")
+                        print(f"Run {run_idx}: Success on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage * 100:.5f}")
                     else:
                         success = False
-                        logger.info(f"Run {run_idx}: Failure on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage[0] * 100:.5f}")
+                        print(f"Run {run_idx}: Failure on attempt {attempt + 1}. MPJPE: {mpjpe * 1000:.5f}, Frame Coverage: {frame_coverage[0] * 100:.5f}")
                     success_dict[run_idx] = success
                     mpjpe_dict[run_idx] = mpjpe
                     frame_coverage_dict[run_idx] = frame_coverage
@@ -132,7 +134,11 @@ class AgentIM(AgentHumanoid):
         if dump:
             os.makedirs("data/dumps", exist_ok=True)
             failed_keys = np.array(failed_keys)
-            np.save(f"data/dumps/failed_keys_{self.cfg.epoch}.npy", failed_keys)
+            # Add current date and time to the filename
+            import datetime
+            current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"data/dumps/failed_keys_{self.cfg.exp_name}_{self.cfg.epoch}_{current_time}.npy"
+            np.save(filename, failed_keys)
 
         if self.env.recording_biomechanics:
             breakpoint()
@@ -152,10 +158,28 @@ class AgentIM(AgentHumanoid):
         with to_cpu(*self.sample_modules), torch.no_grad():
             obs_dict, info = self.env.reset()
             state = self.preprocess_obs(obs_dict)
+            expert_idx = torch.tensor(0, dtype=torch.int64).to(self.device)  # Initialize expert index
             for t in range(10000):
-                actions = self.policy_net.select_action(
-                    torch.from_numpy(state).to(self.dtype), True
-                )[0].numpy()
+                if isinstance(self.policy_net, PolicyMOE):
+                            actions, expert_idx = self.policy_net.select_action(
+                                torch.from_numpy(state).to(self.dtype), True
+                            )
+                            actions = actions[0].numpy()
+                elif isinstance(self.policy_net, PolicyMOEWithPrev):
+                    expert_idx_oh = torch.nn.functional.one_hot(
+                        expert_idx, num_classes=self.cfg.num_experts
+                    ).float()
+                    actions, expert_idx = self.policy_net.select_action(
+                        torch.from_numpy(state).to(self.dtype),
+                        expert_idx_oh,
+                        True,
+                    )
+                    actions = actions[0].numpy()
+                else:
+                    # For non-MoE policies, select action directly
+                    actions = self.policy_net.select_action(
+                        torch.from_numpy(state).to(self.dtype), True
+                    )[0].numpy()
                 next_obs, reward, terminated, truncated, info = self.env.step(
                     self.preprocess_actions(actions)
                 )
