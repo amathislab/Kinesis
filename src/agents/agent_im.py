@@ -8,6 +8,7 @@
 # 1. PHC_MJX (https://github.com/ZhengyiLuo/PHC_MJX)
 
 import os
+from typing import Optional
 import torch
 import numpy as np
 import logging
@@ -77,7 +78,7 @@ class AgentIM(AgentHumanoid):
         self.env = MyoLegsIm(self.cfg)
         logger.info("MyoLegsIm environment initialized.")
 
-    def eval_policy(self, epoch: int = 0, dump: bool = True, runs = None) -> float:
+    def eval_policy(self, epoch: int = 0, dump: Optional[bool | int] = False, runs = None) -> float:
         """
         Evaluates the current policy by running multiple episodes and computing success rates.
 
@@ -134,10 +135,7 @@ class AgentIM(AgentHumanoid):
         if dump:
             os.makedirs("data/dumps", exist_ok=True)
             failed_keys = np.array(failed_keys)
-            # Add current date and time to the filename
-            import datetime
-            current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"data/dumps/failed_keys_{self.cfg.exp_name}_{self.cfg.epoch}_{current_time}.npy"
+            filename = f"data/dumps/failed_keys_{dump}.npy"
             np.save(filename, failed_keys)
 
         if self.env.recording_biomechanics:
