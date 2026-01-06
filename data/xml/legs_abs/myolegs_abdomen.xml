@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<mujoco model="MyoSuite's MyoLeg Model (w simple abdomen, + muscles)">
+<!-- =================================================
+    Copyright 2020 Vikash Kumar, Vittorio Caggiano
+    Model   :: MyoLeg with abdomen (MuJoCoV2.0)
+    Author  :: Vikash Kumar (vikashplus@gmail.com), Vittorio Caggiano
+    source  :: https://github.com/vikashplus
+    License :: Under Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+====================================================== -->
+
+    <include file="myotorso_abdomen_assets.xml"/>
+    <include file="myolegs_assets.xml"/>
+    <include file="myolegs_tendon.xml"/>
+    <include file="myolegs_muscle.xml"/>
+    <!-- <include file="../leg/assets/myolegs_tendon_act.xml"/> -->
+    <!-- <include file="../leg/assets/myolegs_jnt_act.xml"/> -->
+
+    <compiler angle="radian" meshdir=".." texturedir=".."/>
+    <size memory="10M"/>
+
+    <asset>
+        <hfield name="terrain" size="7 7 1 0.001" nrow="100" ncol="100"/>
+        <material name="matfloor" rgba="0.8 0.8 0.8 1" shininess="0.1" specular="0.5"/>
+
+        <!-- <texture type="skybox" builtin="gradient" rgb1=".4 .5 .6" rgb2="0 0 0" width="100" height="100"/> -->
+        <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="100" height="100"/>
+
+        <!-- <texture type="skybox" file="nebulae.png" gridsize="3 4" gridlayout=".U..LFRB.D.."/> -->
+        <texture builtin="flat" height="1278" mark="cross" markrgb="1 1 1" name="texgeom" random="0.01" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" type="cube" width="127"/>
+        <texture builtin="checker" height="100" name="texplane" rgb1="0.2549 0.3765 0.5098" rgb2="0.10588 0.2117 0.3215" type="2d" width="100"/>
+        <!-- <texture builtin="checker" height="100" name="texplane" rgb1="1 1 1" rgb2="1 1 1" type="2d" width="100"/> -->
+
+        <material name="MatPlane" reflectance="0.0" shininess="1" specular="1" texrepeat="5 5" texture="texplane"/>
+        <material name="geom" texture="texgeom" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <global offwidth="7680" offheight="4320"/>
+    </visual>
+
+    <worldbody>
+        <camera name="diagonal" pos="-9.056 -5.039 4.212" xyaxes="0.482 -0.876 0.000 0.446 0.245 0.861"/>
+        <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
+        <geom conaffinity="1" condim="3" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="2.5 2.5 .2" type="plane" material="MatPlane"/>
+        <!-- <geom name="terrain" type="hfield" hfield="terrain" pos="0 0 -0.01" material="MatPlane"/> -->
+        <site name="pelvis_target" size="0.02" pos="0 0 .92" group="4"/>
+
+        <body name="root" pos="0 0 1" euler="0 0 -1.57">
+            <freejoint name="root"/>
+            <include file="myotorso_abdomen_chain.xml"/>
+            <include file="myolegs_chain.xml"/>
+        </body>
+    </worldbody>
+
+    <keyframe>
+        <key qpos='0 0 .92 0.707388 0 0 -0.706825 0 0 0 0.161153 -0.0279385 -0.041886 0.00247908 0.00101098 0.461137 0.0275069 0.136817 0.334 -0.00117055 -0.000125295 -0.0302192 0.0395202 -0.194029 0.161153 -0.0279385 -0.041886 0.00247908 0.00101098 0.461137 0.0275069 0.136817 0.334 -0.00117055 -0.000125295 -0.0302192 0.0395202 -0.194029'/>
+        <key qpos='0 0 .9 0.707388 0 0 -0.706825 0 0 0 0.405648 -0.020957 -0.118677 0.0039054 0.00122326 0.7329 0.0102961 0.215496 0.40143 -0.006982 -0.02618 -0.03738 0.0080579 -0.87272 0.405648 -0.020957 -0.118677 0.0039054 0.00122326 0.7329 0.0102961 0.215496 0.40143 -0.006982 -0.02618 -0.03738 0.0080579 -0.87272'/>
+        <key qpos='0 0 1.0 0.707388 0 0 -0.706825 0 0 0 -0.2326 -0.0279385 -0.041886 0.00247908 0.00101098 1.227 0.0275069 0.136817 0.1672 -0.00117055 -0.000125295 -0.0302192 0.0395202 -0.194029 -0.1652 -0.0279385 -0.041886 0.00247908 0.0010198 0.0888 0.0275069 0.136817 -0.019 -0.00117055 -0.000125295 -0.0302192 0.0395202 -0.194029' qvel='0 -1.5 0 0 0 0 4.9066 0 0 0 0 0 0 0 -3.597 0 0 0.633 0 0 0 0 0 0.175 0 0 0 0 0.175 0 0 0.988 0 0 0 0 0'/>
+        <key qpos='0 0 1.0 0.707388 0 0 -0.706825 0 0 0 -0.1652 -0.0279385 -0.041886 0.00247908 0.00101098 0.0888 0.0275069 0.136817 -0.019 -0.00117055 -0.000125295 -0.0302192 0.0395202 -0.194029 -0.2326 -0.0279385 -0.041886 0.00247908 0.0010198 1.227 0.0275069 0.136817 0.1672 -0.00117055 -0.000125295 -0.0302192 0.0395202 -0.194029' qvel='0 -1.5 0 0 0 0 -0.576 0 0 0 0 0 0 0 0.175 0 0 0.988 0 0 0 0 0 4.9066 0 0 0 0 -3.597 0 0 0.633 0 0 0 0 0'/>
+    </keyframe>
+
+</mujoco>
