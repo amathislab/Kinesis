@@ -82,6 +82,11 @@ class MyoLegsIm(MyoLegsTask):
             self.reset_bodies = MYOLEG_FULLBODY_RESET_BODIES
             self.smpl_tracked_ids = SMPL_FULLBODY_TRACKED_IDS
             self.smpl_reset_ids = SMPL_FULLBODY_RESET_IDS
+        elif cfg.project == "kinesis_legs_abs":
+            self.tracked_bodies = MYOLEG_ABS_TRACKED_BODIES
+            self.reset_bodies = MYOLEG_ABS_RESET_BODIES
+            self.smpl_tracked_ids = SMPL_ABS_TRACKED_IDS
+            self.smpl_reset_ids = SMPL_ABS_RESET_IDS
         else:
             raise NotImplementedError(f"Project {cfg.project} not implemented.")
 

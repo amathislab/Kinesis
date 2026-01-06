@@ -38,6 +38,52 @@ SMPL_RESET_IDS = [
     8,
 ]
 
+## ------------ Legs with abdomen ------------
+
+MYOLEG_ABS_TRACKED_BODIES = [
+    "root",
+    "head",
+    "tibia_l",
+    "tibia_r",
+    "talus_l",
+    "talus_r",
+    "toes_l",
+    "toes_r",
+]
+
+MYOLEG_ABS_RESET_BODIES = [
+    "root",
+    "head",
+    "tibia_l",
+    "tibia_r",
+    "talus_l",
+    "talus_r",
+    "toes_l",
+    "toes_r",
+]
+
+SMPL_ABS_TRACKED_IDS = [
+    0,
+    13,
+    2,
+    6,
+    3,
+    7,
+    4,
+    8,
+]
+
+SMPL_ABS_RESET_IDS = [
+    0,
+    13,
+    2,
+    6,
+    3,
+    7,
+    4,
+    8,
+]
+
 ## ------------ Full body ------------
 
 MYOLEG_FULLBODY_TRACKED_BODIES = [

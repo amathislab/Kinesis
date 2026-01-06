@@ -46,6 +46,11 @@ if [[ $model == "legs" ]]; then
     config_name="config_legs.yaml"
     run_config="eval_run_legs"
     initial_pose_dir="data/initial_pose/legs"
+elif [[ $model == "legs_abs" ]]; then
+    echo "Using legs_abs model"
+    config_name="config_legs_abs.yaml"
+    run_config="eval_run_legs_abs"
+    initial_pose_dir="data/initial_pose/legs_abs"
 elif [[ $model == "fullbody" ]]; then
     echo "Using fullbody model"
     config_name="config_fullbody.yaml"
