@@ -3,26 +3,27 @@
 #
 # Licensed under the BSD 3-Clause License.
 
+import argparse
 from huggingface_hub import snapshot_download
 
 
-def download_assets():
+def download_assets(branch="main"):
     """
-    Download a KINESIS model from Hugging Face and save it in the correct format.
+    Download KINESIS assets from Hugging Face.
     
     Args:
-        repo_id (str): Hugging Face repository ID (username/model-name)
-        output_dir (str): Local directory to save the model
-        filename (str): Name to save the model as
-    
-    Returns:
-        str: Path to the downloaded model
+        branch (str): Branch to download from. Defaults to "main".
     """
     data = snapshot_download(
         repo_id="amathislab/kinesis-assets",
         repo_type="dataset",
         local_dir="data",
+        revision=branch,
     )
 
 if __name__ == "__main__":
-    download_assets()
+    parser = argparse.ArgumentParser(description="Download KINESIS assets from Hugging Face")
+    parser.add_argument("--branch", type=str, default="main", help="Branch to download from")
+    args = parser.parse_args()
+    
+    download_assets(branch=args.branch)

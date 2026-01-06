@@ -78,7 +78,7 @@ python src/utils/convert_kit.py --path <path_to_kit_dataset>
 - Run the following script to download the assets from Hugging Face:
 ```bash
 pip install huggingface_hub
-python src/utils/download_assets.py
+python src/utils/download_assets.py --branch kinesis-2.0
 ```
 
 ### Downloading the pre-trained models
