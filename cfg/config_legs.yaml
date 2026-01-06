@@ -6,7 +6,7 @@ defaults:
 
 notes: "Default Notes"
 project: kinesis_legs
-datadir: legs_model
+datadir: legs
 exp_name: &exp_name kinesis_im
 headless: True
 seed: 0

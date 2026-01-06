@@ -1,11 +1,11 @@
 motion_id: 0
-im_eval: False
-test: False
+im_eval: True
+test: True
 headless: True
 num_threads: 1
 fast_forward: True
 num_motions: 1000
-random_start: True
+random_start: False
 
 control_mode: "direct" # "PD" or "direct"
 
