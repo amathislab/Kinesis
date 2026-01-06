@@ -1,0 +1,35 @@
+# Default experiment name
+task: MyoLegs Imitation
+
+# Simulation Configs
+sim_timestep_inv: 1000
+control_frequency_inv: 10
+max_episode_length: 400
+success_radius: 0.2
+
+# Environment Configs
+terrain_noise_scale: 0.0  # Default terrain noise scale
+init_dim: 4.0
+init_cone: 0.167
+
+# Control Configs
+kp_scale: 1.0
+kd_scale: 1.0
+clip_actions: True
+reward_specs:
+  "k_pos": 200
+  "k_vel": 5
+  "k_energy": 0.005
+  "k_orientation": 2.0
+  "k_tracking": 50.0
+
+  "w_tracking": 1.0
+  "w_upright": 10.0
+  "w_energy": 0.2
+  "w_position": 10.0
+  "w_orientation": 100.0
+  "w_ball": 10.0
+
+#### Task Configs
+resampling_interval: 100
+termination_distance: 0.15
