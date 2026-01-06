@@ -15,7 +15,7 @@ import numpy as np
 
 @hydra.main(
     version_base=None,
-    config_path="../data/cfg",
+    config_path="../../cfg",
     config_name="config_legs.yaml",
 )
 def main(cfg):
