@@ -54,7 +54,7 @@ class MyoLegsEnv(BaseEnv):
             dtype=self.dtype,
         )
 
-        self.muscle_condition = cfg.run.muscle_condition
+        self.muscle_condition = cfg.run.get("muscle_condition", None)
         if self.muscle_condition == "fatigue":
             self.config_fatigue()
 
@@ -141,7 +141,9 @@ class MyoLegsEnv(BaseEnv):
             tally += self.mj_model.nu
         if "feet_contacts" in inputs:
             tally += 4
-        if self.cfg.run.muscle_condition == "fatigue" and self.cfg.run.fatigue_aware:
+
+        fatigue_flag = self.cfg.run.get("fatigue_aware", False) and self.cfg.run.get("muscle_condition", False)
+        if fatigue_flag:
             tally += self.mj_model.nu
 
         return tally

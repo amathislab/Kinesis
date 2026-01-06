@@ -31,30 +31,11 @@ import src.utils.np_transform_utils as npt_utils
 from src.utils.visual_capsule import add_visual_capsule
 from easydict import EasyDict
 from src.KinesisCore.kinesis_core import KinesisCore
+from src.utils.tracking_constants import *
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-MYOLEG_TRACKED_BODIES = [
-    "root",
-    "tibia_l",
-    "tibia_r",
-    "talus_l",
-    "talus_r",
-    "toes_l",
-    "toes_r",
-]
-
-SMPL_TRACKED_IDS = [
-    0,
-    2,
-    6,
-    3,
-    7,
-    4,
-    8,
-]
 
 
 class MyoLegsIm(MyoLegsTask):
@@ -66,6 +47,7 @@ class MyoLegsIm(MyoLegsTask):
         self.global_offset = np.zeros([1, 3])
         self.gender_betas = [np.zeros(17)]  # current, all body shape is mean.
 
+        self.initialize_tracking_constants(cfg)
         self.initialize_env_params(cfg)
         self.initialize_run_params(cfg)
 
@@ -77,6 +59,29 @@ class MyoLegsIm(MyoLegsTask):
         self.initialize_evaluation_metrics()
 
         self.motions_to_remove = []
+
+    def initialize_tracking_constants(self, cfg: DictConfig) -> None:
+        """
+        Initializes tracking constants for the environment.
+
+        Args:
+            cfg (DictConfig): Configuration object.
+        Sets:
+            - `tracked_bodies`: List of body parts to track.
+            - `reset_bodies`: List of body parts to check for reset conditions.
+            - `tracked_ids`: List of SMPL joint IDs to track.
+            - `reset_ids`: List of SMPL joint IDs to check for reset conditions.
+        """
+        if cfg.project == "kinesis":
+            self.tracked_bodies = MYOLEG_TRACKED_BODIES
+            self.reset_bodies = MYOLEG_RESET_BODIES
+            self.smpl_tracked_ids = SMPL_TRACKED_IDS
+            self.smpl_reset_ids = SMPL_RESET_IDS
+        elif cfg.project == "fullbody":
+            self.tracked_bodies = MYOLEG_FULLBODY_TRACKED_BODIES
+            self.reset_bodies = MYOLEG_FULLBODY_RESET_BODIES
+            self.smpl_tracked_ids = SMPL_FULLBODY_TRACKED_IDS
+            self.smpl_reset_ids = SMPL_FULLBODY_RESET_IDS
 
     def initialize_env_params(self, cfg: DictConfig) -> None:
         """
@@ -184,7 +189,7 @@ class MyoLegsIm(MyoLegsTask):
         Capsules are color-coded for differentiation, with red and blue indicating different roles.
         """
         if self.viewer is not None:  # this implies that headless == False
-            for _ in range(len(self.track_bodies)):
+            for _ in range(len(self.tracked_bodies)):
                 add_visual_capsule(
                     self.viewer.user_scn,
                     np.zeros(3),
@@ -201,7 +206,7 @@ class MyoLegsIm(MyoLegsTask):
                 )
 
         if self.renderer is not None:
-            for _ in range(len(self.track_bodies)):
+            for _ in range(len(self.tracked_bodies)):
                 add_visual_capsule(
                     self.viewer.user_scn,
                     np.zeros(3),
@@ -226,12 +231,12 @@ class MyoLegsIm(MyoLegsTask):
             ref_dict = self.get_state_from_motionlib_cache(
                 self._sampled_motion_ids, sim_time, self.global_offset
             )
-            ref_pos_subset = ref_dict.xpos[..., SMPL_TRACKED_IDS, :]
+            ref_pos_subset = ref_dict.xpos[..., self.smpl_tracked_ids, :]
 
-            for i in range(len(self.track_bodies)):
+            for i in range(len(self.tracked_bodies)):
                 scene.geoms[2 * i].pos = ref_pos_subset[0, i]
                 scene.geoms[2 * i + 1].pos = self.get_body_xpos()[
-                    self.track_bodies_id[i]
+                    self.tracked_bodies_id[i]
                 ]
 
         if self.viewer is not None:
@@ -247,20 +252,15 @@ class MyoLegsIm(MyoLegsTask):
         corresponding indices based on the original body names.
 
         Sets:
-            - `self.full_track_bodies`: List of all original body names.
-            - `self.track_bodies`: Names of tracked bodies specific to MyoLeg.
-            - `self.reset_bodies`: Names of bodies to reset.
-            - `self.track_bodies_id`: Indices of tracked bodies in `self.body_names`.
+            - `self.full_tracked_bodies`: List of all original body names.
+            - `self.tracked_bodies_id`: Indices of tracked bodies in `self.body_names`.
             - `self.reset_bodies_id`: Indices of reset bodies in `self.body_names`.
         """
         super().setup_myolegs_params()
-        self.full_track_bodies = self.body_names
-        self.track_bodies = MYOLEG_TRACKED_BODIES
-        self.reset_bodies = (
-            self.track_bodies
-        )
-        self.track_bodies_id = [
-            self.body_names.index(j) for j in self.track_bodies
+        self.full_tracked_bodies = self.body_names
+    
+        self.tracked_bodies_id = [
+            self.body_names.index(j) for j in self.tracked_bodies
         ]
         self.reset_bodies_id = [
             self.body_names.index(j) for j in self.reset_bodies
@@ -376,6 +376,12 @@ class MyoLegsIm(MyoLegsTask):
         self.mj_data.qpos[:3] = ref_qpos[:3]
         rotated_quat = (sRot.from_quat(ref_qpos[[4, 5, 6, 3]]) * initial_rot).as_quat()
         self.mj_data.qpos[3:7] = np.roll(rotated_quat, 1)
+
+        # 90 degree turn along x axis
+        if self.cfg.project == "fullbody":
+            new_rot = sRot.from_euler("XYZ", [0, 0, np.pi / 2])
+            rotated_quat = (sRot.from_quat(self.mj_data.qpos[[4, 5, 6, 3]]) * new_rot).as_quat()
+            self.mj_data.qpos[3:7] = np.roll(rotated_quat, 1)
         
         if self.im_eval == True:
             motion_id = self.motion_start_idx
@@ -398,15 +404,7 @@ class MyoLegsIm(MyoLegsTask):
             self.mj_data.qpos[:] = self.initial_pose
             mujoco.mj_kinematics(self.mj_model, self.mj_data)
         else:
-            # During IK, the humanoid sometimes reaches unfeasible positions. If that happens, we flag the motion and remove it from the dataset.
-            if self.mj_data.qpos[2] < 0.86 or self.mj_data.qpos[2] > 1:
-                if self.motion_lib._curr_motion_ids[0] not in self.motions_to_remove:
-                    self.motions_to_remove.append(self.motion_lib._curr_motion_ids[0])
-                    print(f"Motion {self.motions_to_remove[-1]} removed")
-            else:
-                # If the motion is flagged, just skip, otherwise compute the initial pose on the fly
-                if self.motion_lib._curr_motion_ids[0] not in self.motions_to_remove:
-                    self.compute_initial_pose()
+            self.compute_initial_pose()
 
         # Set up velocity
         ref_qvel = motion_return.qvel.flatten()[:6]
@@ -432,11 +430,11 @@ class MyoLegsIm(MyoLegsTask):
         self.joint_pos.append(np.full(self.get_qpos().shape, np.nan))
         self.joint_vel.append(np.full(self.get_qvel().shape, np.nan))
         self.body_pos.append(np.full(self.get_body_xpos()[None,].shape, np.nan))
-        self.body_rot.append(np.full(self.get_body_xquat()[None,][..., self.track_bodies_id, :].shape, np.nan))
-        self.body_vel.append(np.full(self.get_body_linear_vel()[None,][..., self.track_bodies_id, :].shape, np.nan))
-        self.ref_pos.append(np.full(self.get_body_xpos()[None,][..., SMPL_TRACKED_IDS, :].shape, np.nan))
-        self.ref_rot.append(np.full(self.get_body_xquat()[None,][..., SMPL_TRACKED_IDS, :].shape, np.nan))
-        self.ref_vel.append(np.full(self.get_body_linear_vel()[None,][..., SMPL_TRACKED_IDS, :].shape, np.nan))
+        self.body_rot.append(np.full(self.get_body_xquat()[None,][..., self.tracked_bodies_id, :].shape, np.nan))
+        self.body_vel.append(np.full(self.get_body_linear_vel()[None,][..., self.tracked_bodies_id, :].shape, np.nan))
+        self.ref_pos.append(np.full(self.get_body_xpos()[None,][..., self.smpl_tracked_ids, :].shape, np.nan))
+        self.ref_rot.append(np.full(self.get_body_xquat()[None,][..., self.smpl_tracked_ids, :].shape, np.nan))
+        self.ref_vel.append(np.full(self.get_body_linear_vel()[None,][..., self.smpl_tracked_ids, :].shape, np.nan))
         self.motion_id.append(np.nan)
         self.muscle_forces.append(np.full(self.get_muscle_force().shape, np.nan))
         self.muscle_controls.append(np.full(self.mj_data.ctrl.shape, np.nan))
@@ -456,12 +454,11 @@ class MyoLegsIm(MyoLegsTask):
         inputs = self.cfg.run.task_inputs
         obs_size = 0
         if "diff_local_body_pos" in inputs:
-            obs_size += 3 * len(self.track_bodies)
+            obs_size += 3 * len(self.tracked_bodies)
         if "diff_local_vel" in inputs:
-            obs_size += 3 * len(self.track_bodies)
+            obs_size += 3 * len(self.tracked_bodies)
         if "local_ref_body_pos" in inputs:
-            obs_size += 3 * len(self.track_bodies)
-
+            obs_size += 3 * len(self.tracked_bodies)
         return obs_size
 
     def compute_reset(self) -> Tuple[bool, bool]:
@@ -494,7 +491,8 @@ class MyoLegsIm(MyoLegsTask):
         body_rot = self.get_body_xquat()[None,]
 
         body_pos_subset = body_pos[..., self.reset_bodies_id, :]
-        ref_pos_subset = ref_dict.xpos[..., SMPL_TRACKED_IDS, :]
+        ref_pos_subset = ref_dict.xpos[..., self.smpl_reset_ids, :]
+
         terminated = compute_humanoid_im_reset(
             body_pos_subset,
             ref_pos_subset,
@@ -680,14 +678,14 @@ class MyoLegsIm(MyoLegsTask):
         root_rot = body_rot[:, 0]
         root_pos = body_pos[:, 0]
 
-        body_pos_subset = body_pos[..., self.track_bodies_id, :]
-        body_rot_subset = body_rot[..., self.track_bodies_id, :]
-        ref_pos_subset = ref_dict.xpos[..., SMPL_TRACKED_IDS, :]
-        ref_rot_subset = ref_dict.xquat[..., SMPL_TRACKED_IDS, :]
+        body_pos_subset = body_pos[..., self.tracked_bodies_id, :]
+        body_rot_subset = body_rot[..., self.tracked_bodies_id, :]
+        ref_pos_subset = ref_dict.xpos[..., self.smpl_tracked_ids, :]
+        ref_rot_subset = ref_dict.xquat[..., self.smpl_tracked_ids, :]
 
         body_vel = self.get_body_linear_vel()[None,]
-        body_vel_subset = body_vel[..., self.track_bodies_id, :]
-        ref_body_vel_subset = ref_dict.body_vel[..., SMPL_TRACKED_IDS, :]
+        body_vel_subset = body_vel[..., self.tracked_bodies_id, :]
+        ref_body_vel_subset = ref_dict.body_vel[..., self.smpl_tracked_ids, :]
 
         if self.recording_biomechanics:
             self.record_biomechanics(body_pos_subset, body_rot_subset, body_vel_subset, ref_pos_subset, ref_rot_subset, ref_body_vel_subset)
@@ -814,13 +812,12 @@ class MyoLegsIm(MyoLegsTask):
 
         body_pos = self.get_body_xpos()[None,]
 
-        body_pos_subset = body_pos[..., self.track_bodies_id, :]
-        ref_pos_subset = ref_dict.xpos[..., SMPL_TRACKED_IDS, :]
+        body_pos_subset = body_pos[..., self.tracked_bodies_id, :]
+        ref_pos_subset = ref_dict.xpos[..., self.smpl_tracked_ids, :]
 
         body_vel = self.get_body_linear_vel()[None,]
-        body_vel_subset = body_vel[..., self.track_bodies_id, :]
-        ref_body_vel_subset = ref_dict.body_vel[..., SMPL_TRACKED_IDS, :]
-
+        body_vel_subset = body_vel[..., self.tracked_bodies_id, :]
+        ref_body_vel_subset = ref_dict.body_vel[..., self.smpl_tracked_ids, :]
         reward, reward_raw = compute_imitation_reward(
             body_pos_subset,
             body_vel_subset,
@@ -888,7 +885,8 @@ class MyoLegsIm(MyoLegsTask):
         Args:
             im_eval (bool): Whether to enable imitation evaluation mode. Defaults to True.
         """
-        self.motion_lib_cfg.randomize_heading = False
+        if self.cfg.run.num_motions > 0:
+            self.motion_lib_cfg.randomize_heading = False
         self.im_eval = im_eval
         self.test = True
 
@@ -945,12 +943,11 @@ class MyoLegsIm(MyoLegsTask):
             self.mj_data.qpos[7:] = qpos
             mujoco.mj_kinematics(self.mj_model, self.mj_data)
             body_pos = self.get_body_xpos()[None,]
-            body_pos_subset = body_pos[..., self.track_bodies_id[1:], :]  # remove root
+            body_pos_subset = body_pos[..., self.tracked_bodies_id[1:], :]  # remove root
             return np.linalg.norm(body_pos_subset - ref_pos_subset, axis=-1).sum()
 
         out = scipy.optimize.fmin_slsqp(
             func=distance_to_default,
-            # x0=self.mj_data.qpos[7:],
             x0=self.previous_pose[7:] if self.previous_pose is not None else initial_qpos[7:],
             eqcons=[distance_to_ref],
             bounds=bounds,
@@ -958,6 +955,9 @@ class MyoLegsIm(MyoLegsTask):
             iter=200,
             acc=0.02,
         )
+
+        print(f"Final distance to ref: {distance_to_ref(out)}")
+        self.final_distance_to_ref = distance_to_ref(out)
 
         self.initial_pose = np.concatenate([initial_qpos[:7], out])
 
@@ -992,7 +992,7 @@ class MyoLegsIm(MyoLegsTask):
 
         return obs, reward, terminated, truncated, info
 
-    def step(self, action):
+    def step(self, action=None):
         """
         Executes a single step in the environment with the given action.
 
@@ -1017,7 +1017,6 @@ class MyoLegsIm(MyoLegsTask):
             self.render()
 
         return observation, reward, terminated, truncated, info
-
 
 def compute_imitation_observations(
     root_pos: np.ndarray,

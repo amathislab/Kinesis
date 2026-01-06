@@ -249,13 +249,13 @@ class MyoLegsPointGoal(MyoLegsIm):
         root_rot = body_rot[:, 0]
         root_pos = body_pos[:, 0]
 
-        body_pos_subset = body_pos[..., self.track_bodies_id, :]
+        body_pos_subset = body_pos[..., self.tracked_bodies_id, :]
 
         ref_pos_subset = body_pos_subset
         ref_pos_subset[..., 0, :] = self.goal_pos
 
         body_vel = self.get_body_linear_vel()[None,]
-        body_vel_subset = body_vel[..., self.track_bodies_id, :]
+        body_vel_subset = body_vel[..., self.tracked_bodies_id, :]
 
         zeroed_task_obs = compute_imitation_observations(
             root_pos,
