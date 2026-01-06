@@ -34,7 +34,7 @@ elif [[ $model == "legs_abs" ]]; then
 elif [[ $model == "legs_back" ]]; then
     echo "Using legs_back model"
     config_name="config_legs_back.yaml"
-    run_config="train_run_legs_back"
+    run_config="eval_run_legs_back"
 elif [[ $model == "fullbody" ]]; then
     echo "Using fullbody model"
     config_name="config_fullbody.yaml"
