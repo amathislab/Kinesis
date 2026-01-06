@@ -1,7 +1,9 @@
 #!/bin/bash
 
-python src/run.py exp_name=kinesis-target-goal-reach \
-    run=eval_run \
+python src/run.py \
+    --config-name config_legs.yaml \
+    exp_name=target-reach \
+    run=eval_run_legs \
     learning=directional \
     epoch=-1 \
     run.headless=False \
