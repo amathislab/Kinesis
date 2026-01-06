@@ -4,12 +4,23 @@
 model=legs
 dataset=test
 headless=False
+actor_type=moe
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --model)
             model=$2
+            shift
+            shift
+            ;;
+        --exp_name)
+            exp_name=$2
+            shift
+            shift
+            ;;
+        --actor_type)
+            actor_type=$2
             shift
             shift
             ;;
@@ -34,9 +45,14 @@ if [[ $model == "legs" ]]; then
     echo "Using legs model"
     config_name="config_legs.yaml"
     run_config="eval_run_legs"
-    initial_pose_dir="data/initial_pose/legs_model"
+    initial_pose_dir="data/initial_pose/legs"
+elif [[ $model == "fullbody" ]]; then
+    echo "Using fullbody model"
+    config_name="config_fullbody.yaml"
+    run_config="eval_run_fullbody"
+    initial_pose_dir="data/initial_pose/fullbody"
 else
-    echo "Invalid model: $model. Currently only 'legs' model is supported."
+    echo "Invalid model: $model. Currently only 'legs' and 'fullbody' models are supported."
     exit 1
 fi
 
@@ -51,11 +67,21 @@ else
     exit 1
 fi
 
+if [[ $actor_type == "moe" ]]; then
+    actor_type=moe
+elif [[ $actor_type == "lattice" ]]; then
+    actor_type=lattice
+else
+    echo "Invalid actor type: $actor_type. Use 'moe' or 'lattice'."
+    exit 1
+fi
+
 # Run the script
 python src/run.py \
     --config-name ${config_name} \
-    exp_name=kinesis-moe-imitation \
+    exp_name=${exp_name} \
     epoch=-1 \
+    learning.actor_type=${actor_type} \
     run=${run_config} \
     run.headless=${headless} \
     run.motion_file=${motion_file} \
