@@ -14,7 +14,7 @@ no_log: False
 resume_str: null
 num_threads: 1
 test: False 
-output_dir: data/trained_models/${exp_name}
+output_dir: data/trained_models/legs/${exp_name}
 epoch: 0
 im_eval: False
 num_primitive: 3
@@ -26,5 +26,5 @@ hydra:
     env_set:
       OMP_NUM_THREADS: 1
   run:
-    dir: data/trained_models/${exp_name}
+    dir: data/trained_models/legs/${exp_name}
 
