@@ -38,7 +38,7 @@ SMPL_RESET_IDS = [
     8,
 ]
 
-## ------------ Legs with abdomen ------------
+## ------------ Legs with abdomen or with back ------------
 
 MYOLEG_ABS_TRACKED_BODIES = [
     "root",
