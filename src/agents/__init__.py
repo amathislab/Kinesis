@@ -14,6 +14,7 @@ from .agent_ppo import AgentPPO
 from .agent_humanoid import AgentHumanoid
 from .agent_pointgoal import AgentPointGoal
 from .agent_directional import AgentDirectional
+from .agent_ball_reach import AgentBallReach
 
 agent_dict = {
     'agent': Agent,
@@ -22,5 +23,6 @@ agent_dict = {
     'agent_humanoid': AgentHumanoid,
     'agent_im': AgentIM,
     'agent_pointgoal': AgentPointGoal,
-    'agent_directional': AgentDirectional
+    'agent_directional': AgentDirectional,
+    'agent_ball_reach': AgentBallReach
 }
