@@ -30,7 +30,7 @@ import hydra
 @hydra.main(
     version_base=None,
     config_path="../cfg",
-    config_name="config",
+    config_name="config_fullbody",
 )
 def main(cfg: DictConfig) -> None:
     print(
@@ -64,11 +64,12 @@ def main(cfg: DictConfig) -> None:
     print(f"Using: {device}, setting to deterministic")
     np.random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    torch.use_deterministic_algorithms(True)
 
-    # breakpoint()
+    if cfg.learning.actor_type not in  ["moe", "moe_with_prev"]:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
+
     agent = agent_dict[cfg.learning.agent_name](
         cfg, dtype, device, training=True, checkpoint_epoch=cfg.epoch
     )
