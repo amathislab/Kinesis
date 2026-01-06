@@ -12,7 +12,7 @@ class Experts(nn.Module):
     def __init__(self, cfg, action_dim, state_dim, num_experts, freeze=True):
         super().__init__()
         self.norm = RunningNorm(state_dim)
-
+        self.action_dim = action_dim
         mlp_hsize = cfg.learning.mlp.units
         mlp_htype = cfg.learning.mlp.activation
 

@@ -10,7 +10,7 @@
 import numpy as np
 
 class TrajBatch:
-    def __init__(self, memory_list):
+    def __init__(self, memory_list, has_expert_idx=False):
         memory = memory_list[0]
         for x in memory_list[1:]:
             memory.append(x)
@@ -21,3 +21,7 @@ class TrajBatch:
         self.next_states = np.stack(next(self.batch))
         self.rewards = np.stack(next(self.batch))
         self.exps = np.stack(next(self.batch))
+        if has_expert_idx:
+            self.expert_indices = np.stack(next(self.batch))
+        else:
+            self.expert_indices = None
