@@ -17,7 +17,7 @@ from src.env.myolegs_im import MyoLegsIm, compute_imitation_observations
 from src.env.myolegs_env import action_to_target_length, target_length_to_activation
 from src.utils.visual_capsule import add_visual_capsule
 
-from scipy.spatial.transform import Rotation as sRot
+from src.utils.pose_constants import LEGS_ABS_POSE, LEGS_POSE
 
 import logging
 
@@ -98,70 +98,11 @@ class MyoLegsPointGoal(MyoLegsIm):
         """
         Retrieves motion data from the motion library and sets the initial pose.
         """
-        if self.cfg.run.test == False:
+        if self.cfg.project == "kinesis_legs_back":
             super().initialize_motion_state()
-
+            return
         else:
-            self.mj_data.qpos[:] = 0
-            self.mj_data.qvel[:] = 0
-            self.mj_data.qpos[2] = 0.94
-            self.mj_data.qpos[3:7] = np.array([0.5, 0.5, 0.5, 0.5])
-
-            initial_rot = sRot.from_euler("XYZ", [np.pi / 2, 0, -np.pi / 2])
-            ref_qpos = np.array(
-                [
-                    0.70731837,
-                    0.6811051,
-                    0.9361768,
-                    0.50487715,
-                    0.4650055,
-                    -0.50120455,
-                    -0.5269373,
-                ]
-            ).astype(np.float32)
-            self.mj_data.qpos[:3] = ref_qpos[:3]
-            self.mj_data.qpos[3:7] = (initial_rot * sRot.from_quat(ref_qpos[3:7])).as_quat()
-
-            self.initial_pose = np.array(
-                [
-                    0.57133061,
-                    -1.21943974,
-                    0.93766457,
-                    0.84073663,
-                    0.02309985,
-                    -0.02534906,
-                    0.54035704,
-                    0.05718979,
-                    -0.08046306,
-                    -0.36137755,
-                    0.00613998,
-                    0.00156276,
-                    0.34577042,
-                    0.03181017,
-                    0.15059691,
-                    0.23338945,
-                    0.22419988,
-                    0.03759186,
-                    -0.01772005,
-                    0.01923135,
-                    -0.11780726,
-                    0.07734922,
-                    -0.03445803,
-                    -0.33847641,
-                    -0.00639306,
-                    0.00154999,
-                    0.35934485,
-                    0.0327628,
-                    -0.16855011,
-                    0.20909414,
-                    0.2539858,
-                    0.03759526,
-                    -0.01772008,
-                    0.01923106,
-                    -0.11780739,
-                ]
-            ).astype(np.float32)
-            self.mj_data.qpos[7:] = self.initial_pose[7:]
+            self.mj_data.qpos[:] = LEGS_ABS_POSE if self.cfg.project == "kinesis_legs_abs" else LEGS_POSE
 
             # Set up velocity
             self.mj_data.qvel[:6] = 0
