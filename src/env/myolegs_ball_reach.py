@@ -1,0 +1,361 @@
+# Copyright (c) 2025 Mathis Group for Computational Neuroscience and AI, EPFL
+# All rights reserved.
+#
+# Licensed under the BSD 3-Clause License.
+#
+# This file contains code adapted from:
+#
+# 1. SMPLSim (https://github.com/ZhengyiLuo/SMPLSim)
+#    Copyright (c) 2024 Zhengyi Luo
+#    Licensed under the BSD 3-Clause License.
+
+import numpy as np
+from typing import Tuple
+import mujoco
+
+from src.env.myolegs_im import MyoLegsIm, compute_imitation_observations
+from src.env.myolegs_env import action_to_target_length, target_length_to_activation, MyoLegsEnv
+from src.utils.visual_capsule import add_visual_capsule
+
+from scipy.spatial.transform import Rotation as sRot
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+class MyoLegsBallReach(MyoLegsIm):
+    """
+    Implements two high-level control tasks for the KINESIS(MyoLeg) framework:
+    1. Target Goal Reaching
+    2. Directional Control
+
+    Attributes:
+        goal_pos (np.ndarray): 
+            A numpy array of shape (3,) representing the current goal position in 3D space. 
+            The agent will always try to reach this goal position with its root (pelvis).
+
+        previous_tracking_distance (float or None): 
+            The previous distance to the goal used for tracking progress. 
+            This variable is used to calculate the tracking reward (see below).
+    """
+
+    def __init__(self, cfg):
+        self.global_offset = np.zeros([1, 3])
+        self.gender_betas = [np.zeros(17)]  # current, all body shape is mean.
+
+        self.initialize_env_params(cfg)
+        self.initialize_run_params(cfg)
+
+        MyoLegsEnv.__init__(self, cfg)
+        
+        self.initialize_biomechanical_recording()
+        self.initialize_evaluation_metrics()
+        self.ball_pos = np.array([0, 0, 0.94], dtype=np.float32)  # Initial ball position
+        self.previous_tracking_distance = None
+
+        if self.cfg.run.test == True:
+            self.results_list = []
+
+    def create_task_visualization(self) -> None:
+        """
+        Creates a visual representation of the task in the viewer.
+
+        This function adds a visual capsule to the user scene of the viewer 
+        if the viewer is initialized. The capsule serves as a marker for the 
+        goal position.
+        """
+        if self.viewer is not None:
+            add_visual_capsule(self.viewer.user_scn, np.zeros(3), np.array([0.001, 0, 0]), 0.05, np.array([1, 0, 0, 1]))
+
+    def draw_task(self) -> None:
+        """
+        Updates the visual representation of the task.
+
+        This function updates the position of the visual object in the user 
+        scene to match the current goal position.
+        """
+        if self.viewer is not None and self.ball_pos is not None:
+            self.viewer.user_scn.geoms[0].pos = self.ball_pos
+
+    def compute_tracking_distance(self) -> float:
+        """
+        Computes the Euclidean distance between the root position and the ball position.
+
+        The distance is calculated in the 2D plane (ignoring the z-axis).
+
+        Returns:
+            float: The tracking distance.
+        """
+        body_pos = self.get_body_xpos()
+        root_pos = body_pos[0]
+        tracking_distance = np.linalg.norm(root_pos[:2] - self.ball_pos[:2])
+        return tracking_distance
+    
+    def init_myolegs(self) -> None:
+        """
+        Initializes the MyoLegs environment.
+
+        This method extends the superclass `init_myolegs` function, and 
+        additionally "warm starts" the task by computing the 
+        current tracking distance.
+        """
+        super().init_myolegs()
+        self.previous_tracking_distance = self.compute_tracking_distance()
+        return
+    
+    def initialize_motion_state(self) -> None:
+        """
+        Retrieves motion data from the motion library and sets the initial pose.
+        """
+        # super().initialize_motion_state()
+        self.mj_data.qpos[0] = np.random.uniform(-self.cfg.env.init_dim, 0)
+        self.mj_data.qpos[1] = np.random.uniform(-self.cfg.env.init_dim, self.cfg.env.init_dim)
+        # self.mj_data.qpos[3:7] = np.array([1, 0, 0, 0])
+        random_rotation = sRot.from_euler('x', np.random.uniform(np.pi / 2 - np.pi * self.cfg.env.init_cone, np.pi / 2 + np.pi * self.cfg.env.init_cone), degrees=False)
+        self.mj_data.qpos[3:7] = random_rotation.as_quat()
+        mujoco.mj_kinematics(self.mj_model, self.mj_data)
+
+    def compute_reset(self) -> Tuple[bool, bool]:
+        """
+        Determines whether the task should be reset based on termination and truncation conditions.
+
+        Termination means failure, while truncation means success.
+
+        Returns:
+            tuple:
+                - terminated (bool): If the agent falls before the episode times out, or if the episode times out but the agent is not close enough to the goal.
+                - truncated (bool): If the agent is standing close enough to the goal when the episode times out.
+        """
+        fall_terminated = self.proprioception["root_height"] < 0.7
+        timetout_terminated = self.cur_t >= self.cfg.env.max_episode_length
+        truncated = timetout_terminated and np.linalg.norm(self.get_body_xpos()[0, :2] - self.ball_pos[:2]) < self.cfg.env.success_radius
+        terminated = fall_terminated or (timetout_terminated and not truncated)
+
+        if self.cfg.run.test == True:
+            if truncated:
+                self.results_list.append(True)
+            elif terminated:
+                self.results_list.append(False)
+
+        return terminated, truncated
+    
+    def reset_task(self, options=None) -> None:
+        """
+        Resets the task to an initial state by reinitializing key motion parameters.
+
+        The function selects a random start time for the reference motion that the agent
+        uses to initialize its position.
+
+        Args:
+            options (dict, optional): Additional options for task resetting. Defaults to None.
+        """
+        pass
+    
+    def compute_task_obs(self) -> np.ndarray:
+        """
+        Computes task-specific observations used for imitation learning or control.
+
+        This function calculates observations based on the current state of the body and 
+        its relation to the goal position. It includes positional and velocity differences, 
+        local reference positions, and biomechanical data (if enabled).
+
+        The observations are structured to be useful for downstream tasks such as 
+        imitation learning or reinforcement learning.
+
+        Returns:
+            np.ndarray: A concatenated array of task observations, including positional 
+            differences, velocity differences, and local reference positions.
+
+        Notes:
+            - The reason we overload this function from `MyoLegsIm` is to set every
+            reference position except the root to the current position of the agent.
+            - If biomechanics recording is enabled, updates the list of foot contact states 
+            and joint positions for analysis.
+            - The returned observations are computed in a normalized and relative format 
+            to ensure consistent scale and alignment.
+
+        Observation Structure:
+            - `diff_local_body_pos`: Difference in local body positions.
+            - `diff_local_vel`: Difference in local body velocities.
+            - `local_ref_body_pos`: Local reference body positions.
+
+        Updates:
+            - If `self.recording_biomechanics` is True, the function:
+            - Updates `self.feet` with the current state of foot contacts.
+            - Appends the current joint positions to `self.joint_pos`.
+
+        """
+        body_pos = self.get_body_xpos()[None,]
+        body_rot = self.get_body_xquat()[None,]
+
+        root_rot = body_rot[:, 0]
+        root_pos = body_pos[:, 0]
+
+        body_pos_subset = body_pos[..., self.track_bodies_id, :]
+
+        ref_pos_subset = body_pos_subset
+        ref_pos_subset[..., 0, :] = self.ball_pos
+
+        body_vel = self.get_body_linear_vel()[None,]
+        body_vel_subset = body_vel[..., self.track_bodies_id, :]
+
+        zeroed_task_obs = compute_imitation_observations(
+            root_pos,
+            root_rot,
+            body_pos_subset,
+            body_vel_subset,
+            ref_pos_subset,
+            body_vel_subset,
+            time_steps=1,
+        )
+
+        task_obs = {}
+        task_obs["diff_local_body_pos"] = zeroed_task_obs["diff_local_body_pos"]
+        task_obs["diff_local_vel"] = zeroed_task_obs["diff_local_vel"]
+        task_obs["local_ref_body_pos"] = zeroed_task_obs["local_ref_body_pos"]
+
+        # Update feet contacts
+        if self.recording_biomechanics:
+            feet_contacts = self.proprioception["feet_contacts"]
+            planted_feet = -1
+            if feet_contacts[0] > 0 or feet_contacts[1] > 0:
+                planted_feet = 1
+            if feet_contacts[2] > 0 or feet_contacts[3] > 0:
+                planted_feet = 0
+            if (feet_contacts[0] > 0 or feet_contacts[1] > 0) and (feet_contacts[2] > 0 or feet_contacts[3] > 0):
+                planted_feet = 2
+            self.feet.append(planted_feet)
+            self.joint_pos.append(self.get_qpos().copy())
+            self.joint_vel.append(self.get_qvel().copy())
+            self.body_pos.append(body_pos.copy())
+            self.body_rot.append(body_rot.copy())
+            self.body_vel.append(body_vel.copy())
+            self.muscle_forces.append(self.get_muscle_force().copy())
+            self.muscle_controls.append(self.mj_data.ctrl.copy())
+
+        return np.concatenate(
+            [v.ravel() for v in task_obs.values()], axis=0, dtype=self.dtype
+        )
+    
+    def compute_reward(self, action):
+        """
+        Computes the reward for the current timestep based on task performance metrics.
+
+        The reward is calculated as a weighted combination of several components (see below).
+
+        Args:
+            action (np.ndarray): The action applied at the current timestep.
+
+        Returns:
+            float: The computed reward for the current timestep.
+
+        Reward Components:
+            - `tracking_reward`: Proportional to the improvement in distance to the goal, scaled by a factor of 20.
+            - `energy_reward`: Average power usage (negative reward for excessive energy consumption).
+            - `upright_reward`: Encourages an upright posture based on orientation.
+            - `success_reward`: Fixed bonus (100) for reaching the goal within a threshold distance (0.1 units).
+
+        Updates:
+            - `self.previous_tracking_distance`: Stores the current tracking distance for use in the next step.
+            - `self.curr_power_usage`: Clears the current power usage data.
+            - `self.reward_info`: Dictionary storing individual reward components for analysis.
+
+        Notes:
+            - The final reward is a weighted combination of components, with weights specified in `self.reward_specs`.
+        """
+        body_pos = self.get_body_xpos()
+        root_pos = body_pos[0]
+
+        current_tracking_distance = np.linalg.norm(root_pos[:2] - self.ball_pos[:2])
+        tracking_reward = (self.previous_tracking_distance - current_tracking_distance) * self.reward_specs["k_tracking"]
+
+        self.previous_tracking_distance = current_tracking_distance
+
+        energy_reward = np.mean(self.curr_power_usage)
+        self.curr_power_usage = []
+
+        position_reward = 1.0 if current_tracking_distance < self.cfg.env.success_radius else 0.0
+
+        orientation_reward = self.compute_orientation_reward(current_tracking_distance)
+
+        reward = (tracking_reward * self.reward_specs["w_tracking"] + 
+                  energy_reward * self.reward_specs["w_energy"] +
+                  self.compute_upright_reward() * self.reward_specs["w_upright"] +
+                  position_reward * self.reward_specs["w_position"] +
+                  orientation_reward * self.reward_specs["w_orientation"])
+
+        self.reward_info = {
+            "tracking_reward": tracking_reward,
+            "upright_reward": self.compute_upright_reward(),
+            "energy_reward": energy_reward,
+            "position_reward": position_reward,
+            "orientation_reward": orientation_reward,
+        }
+        return reward
+
+    def compute_orientation_reward(self, current_tracking_distance):
+        if current_tracking_distance >= self.cfg.env.success_radius:
+            return 0.0
+        curr_angle = sRot.from_quat(self.get_qpos()[3:7])
+        target_angle = sRot.from_quat(np.array([1, 0, 0, 0]))
+        angle_diff = target_angle.inv() * curr_angle
+        return np.exp(- self.reward_specs["k_orientation"] * angle_diff.magnitude())  # Encourage alignment with the target orientation
+
+
+    def step(self, action):
+        """
+        Executes a single step in the environment with the given action.
+
+        Args:
+            action: The action to apply at the current step.
+
+        Returns:
+            Tuple:
+                - observation (np.ndarray): Current observations after the step.
+                - reward (float): Reward for the applied action.
+                - terminated (bool): Whether the task has terminated prematurely.
+                - truncated (bool): Whether the task has exceeded its allowed time.
+                - info (dict): Additional information about the step, including reward details.
+        """
+        if self.recording_biomechanics:
+            self.policy_outputs.append(action)
+
+        self.physics_step(action)
+        observation, reward, terminated, truncated, info = self.post_physics_step(action)
+
+        if self.render_mode == "human":
+            self.render()
+
+        return observation, reward, terminated, truncated, info
+    
+    def physics_step(self, action: np.ndarray = None) -> None:
+        """
+        Executes a physics step in the simulation with the given action.
+
+        Depending on the control mode, computes muscle activations and applies them 
+        to the simulation. Tracks power usage during the step.
+
+        Args:
+            action (np.ndarray): The action to apply. If None, a random action is sampled.
+        """
+        self.curr_power_usage = []
+
+        if action is None:
+            action = self.action_space.sample()
+        
+        if self.control_mode == "PD":
+            target_lengths = action_to_target_length(action, self.mj_model)
+
+        for i in range(self.control_freq_inv):
+            if not self.paused:
+                if self.control_mode == "PD":
+                    muscle_activity = target_length_to_activation(target_lengths, self.mj_data, self.mj_model)
+                elif self.control_mode == "direct":
+                    muscle_activity = (action + 1.0) / 2.0
+
+                else:
+                    raise NotImplementedError
+                  
+                self.mj_data.ctrl[:] = muscle_activity
+                mujoco.mj_step(self.mj_model, self.mj_data)
+                self.curr_power_usage.append(self.compute_energy_reward(muscle_activity))
