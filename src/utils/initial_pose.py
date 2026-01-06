@@ -32,7 +32,7 @@ def main(cfg):
         )
         motion_length = env.motion_lib._motion_lengths[0]
         initial_pose_dict[env.motion_lib._curr_motion_ids[0]] = {}
-        print(f'Processing motion {env.motion_lib._curr_motion_ids[0]}: {motion_length} frames')
+        print(f'Processing motion {env.motion_lib._curr_motion_ids[0]}: {motion_length} seconds.')
         for start_time in np.arange(0, motion_length, 0.2):
             print(f'Start time: {start_time}')
             env.reset(options={'start_time': start_time})
