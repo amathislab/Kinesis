@@ -6,6 +6,7 @@ defaults:
 
 notes: "Default Notes"
 project: kinesis_fullbody
+datadir: fullbody
 exp_name: &exp_name kinesis_fullbody
 headless: True
 seed: 0

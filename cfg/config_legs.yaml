@@ -5,7 +5,8 @@ defaults:
   - run: train_run_legs
 
 notes: "Default Notes"
-project: kinesis
+project: kinesis_legs
+datadir: legs_model
 exp_name: &exp_name kinesis_im
 headless: True
 seed: 0
