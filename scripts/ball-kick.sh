@@ -1,3 +1,5 @@
+#!/bin/bash
+
 python src/run.py \
     --config-name config_legs_back.yaml \
     exp_name=ball-kick \
