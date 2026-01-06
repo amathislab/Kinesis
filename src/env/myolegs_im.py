@@ -72,16 +72,18 @@ class MyoLegsIm(MyoLegsTask):
             - `tracked_ids`: List of SMPL joint IDs to track.
             - `reset_ids`: List of SMPL joint IDs to check for reset conditions.
         """
-        if cfg.project == "kinesis":
+        if cfg.project == "kinesis_legs":
             self.tracked_bodies = MYOLEG_TRACKED_BODIES
             self.reset_bodies = MYOLEG_RESET_BODIES
             self.smpl_tracked_ids = SMPL_TRACKED_IDS
             self.smpl_reset_ids = SMPL_RESET_IDS
-        elif cfg.project == "fullbody":
+        elif cfg.project == "kinesis_fullbody":
             self.tracked_bodies = MYOLEG_FULLBODY_TRACKED_BODIES
             self.reset_bodies = MYOLEG_FULLBODY_RESET_BODIES
             self.smpl_tracked_ids = SMPL_FULLBODY_TRACKED_IDS
             self.smpl_reset_ids = SMPL_FULLBODY_RESET_IDS
+        else:
+            raise NotImplementedError(f"Project {cfg.project} not implemented.")
 
     def initialize_env_params(self, cfg: DictConfig) -> None:
         """
@@ -378,7 +380,7 @@ class MyoLegsIm(MyoLegsTask):
         self.mj_data.qpos[3:7] = np.roll(rotated_quat, 1)
 
         # 90 degree turn along x axis
-        if self.cfg.project == "fullbody":
+        if self.cfg.project == "kinesis_fullbody":
             new_rot = sRot.from_euler("XYZ", [0, 0, np.pi / 2])
             rotated_quat = (sRot.from_quat(self.mj_data.qpos[[4, 5, 6, 3]]) * new_rot).as_quat()
             self.mj_data.qpos[3:7] = np.roll(rotated_quat, 1)
@@ -927,7 +929,7 @@ class MyoLegsIm(MyoLegsTask):
             ref_dict = self.get_state_from_motionlib_cache(
                 self._sampled_motion_ids, self._motion_start_times, self.global_offset
             )
-        ref_pos_subset = ref_dict.xpos[..., SMPL_TRACKED_IDS[1:], :]  # remove root
+        ref_pos_subset = ref_dict.xpos[..., self.smpl_tracked_ids[1:], :]  # remove root
 
         joint_range = self.mj_model.jnt_range.copy()
         bounds = joint_range[1:, :]
