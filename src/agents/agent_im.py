@@ -8,7 +8,7 @@
 # 1. PHC_MJX (https://github.com/ZhengyiLuo/PHC_MJX)
 
 import os
-from typing import Optional
+from typing import Optional, Union
 import torch
 import numpy as np
 import logging
@@ -78,7 +78,7 @@ class AgentIM(AgentHumanoid):
         self.env = MyoLegsIm(self.cfg)
         logger.info("MyoLegsIm environment initialized.")
 
-    def eval_policy(self, epoch: int = 0, dump: Optional[bool | int] = False, runs = None) -> float:
+    def eval_policy(self, epoch: int = 0, dump: Optional[Union[bool, int]] = False, runs = None) -> float:
         """
         Evaluates the current policy by running multiple episodes and computing success rates.
 
