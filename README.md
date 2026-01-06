@@ -82,10 +82,9 @@ python src/utils/download_assets.py
 ```
 
 ### Downloading the pre-trained models
-- Run the following scripts to download the models from Hugging Face:
+- Run the following script to download the models from Hugging Face:
 ```bash
-python src/utils/download_model.py --repo_id amathislab/kinesis-moe-imitation
-python src/utils/download_model.py --repo_id amathislab/kinesis-target-goal-reach
+python src/utils/download_models.py
 ```
 - The saved `model.pth` checkpoints will be saved in the `data/trained_models` directory.
 

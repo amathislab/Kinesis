@@ -5,7 +5,7 @@
 
 import argparse
 import os
-from huggingface_hub import hf_hub_download
+from huggingface_hub import snapshot_download
 
 
 def download_kinesis_model(
@@ -18,7 +18,6 @@ def download_kinesis_model(
     Args:
         repo_id (str): Hugging Face repository ID (username/model-name)
         output_dir (str): Local directory to save the model
-        filename (str): Name to save the model as
     
     Returns:
         str: Path to the downloaded model
@@ -27,7 +26,7 @@ def download_kinesis_model(
     os.makedirs(output_dir, exist_ok=True)
     
     # Download the model
-    model_path = hf_hub_download(repo_id=repo_id, filename="model.pth", local_dir=output_dir)
+    model_path = snapshot_download(repo_id=repo_id, local_dir=output_dir)
     
     print(f"Model downloaded and saved to {output_dir}")
     
@@ -35,11 +34,11 @@ def download_kinesis_model(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download a KINESIS model from Hugging Face")
-    parser.add_argument("--repo_id", type=str, help="Hugging Face repository ID (username/model-name)")
+    parser.add_argument("--repo_id", type=str, default="amathislab/kinesis-models", help="Hugging Face repository ID (username/model-name)")
 
     args = parser.parse_args()
 
-    output_dir = "data/trained_models/" + args.repo_id.split("/")[-1]
+    output_dir = "data/trained_models/"
     # Example usage
     download_kinesis_model(
         repo_id=args.repo_id,
