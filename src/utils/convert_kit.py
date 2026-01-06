@@ -156,5 +156,8 @@ if __name__ == "__main__":
         key: amass_full_motion_dict[key] for key in test_keys
     }
 
+    print(f"Number of train samples: {len(kit_train_motion_dict)}")
+    print(f"Number of test samples: {len(kit_test_motion_dict)}")
+
     joblib.dump(kit_train_motion_dict, "data/kit_train_motion_dict.pkl")
     joblib.dump(kit_test_motion_dict, "data/kit_test_motion_dict.pkl")
