@@ -1,28 +1,30 @@
-[![Downloads](https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/amathislab/kinesis-assets&query=downloads&label=downloads)](https://huggingface.co/papers/2503.14637)
-
 # KINESIS: Reinforcement Learning-Based Motion Imitation for Physiologically Plausible Musculoskeletal Motor Control
 
 <p align="center">
-  <img src="./assets/Fig1-abstract.png" alt="KINESIS Logo" width="400"/>
+  <img src="./assets/abstract-figure.png" alt="KINESIS Logo" width="400"/>
 </p>
 
-**🚨🚨 Update coming soon! 🚨🚨**  Kinesis now supports musculoskeletal embodiments of up to _290 muscles_ and downstream tasks including football penalty kicks ⚽️! Code and models coming soon.
+**🌟🌟 New Update! 🌟🌟**  Kinesis now supports musculoskeletal embodiments of up to _290 muscles_, downstream tasks including football penalty kicks ⚽️, and fatigue!
+
+**🚨🚨 Coming soon! 🚨🚨** Full-body model with arms, controlled by _416 muscles_! Stay tuned!
 
 ## Overview
 
-KINESIS is a model-free reinforcement learning framework for physiologically plausible musculoskeletal motor control. Using a musculoskeletal model of the lower body with 80 muscle actuators and 20 degrees of freedom, KINESIS achieves strong imitation performance on motion capture data, is controllable via natural language, and can be fine-tuned for high-level tasks like goal-directed movement.
+KINESIS is a model-free imitation-learning framework that facilitates the development of effective and scalable muscle-based control policies of locomotion. KINESIS is trained on 1.8 hours of locomotion data and achieves strong motion imitation performance on unseen trajectories. Through a negative mining approach, KINESIS learns robust locomotion priors that we leverage to deploy the policy on several downstream tasks, such as text-to-control, target point reaching, directional control, and football penalty kicks.
 
-Importantly, KINESIS generates muscle activity patterns that correlate well with human electromyography (EMG) data, making it a promising model for tackling challenging problems in human motor control theory. Check out the [arxiv article for more details!](https://arxiv.org/abs/2503.14637)
+Importantly, KINESIS generates muscle activity patterns that correlate well with human electromyography (EMG) data, making it a promising model for tackling challenging problems in human motor control theory. We show that these results scale seamlessly across biomechanical model complexity, demonstrating control of up to **290 muscles**.
+
+Check out the [arxiv article for more details!](https://arxiv.org/abs/2503.14637)
 
 ## Demonstrations
 
 <h3 align="center">Motion Imitation</h3>
 <p align="center">
-  <img src="./assets/kit/kit_walk.gif" alt="Walking Forward" width="19%"/>
-  <img src="./assets/kit/kit_gradual_turn.gif" alt="Gradual Turn" width="19%"/>
-  <img src="./assets/kit/kit_turn_in_place.gif" alt="Turn in Place" width="19%"/>
-  <img src="./assets/kit/kit_backward.gif" alt="Walking Backwards" width="19%"/>
-  <img src="./assets/kit/kit_run.gif" alt="Running" width="19%"/>
+  <img src="./assets/kit/walk_forward.gif" alt="Walking Forward" width="19%"/>
+  <img src="./assets/kit/gradual_turn.gif" alt="Gradual Turn" width="19%"/>
+  <img src="./assets/kit/turn_in_place.gif" alt="Turn in Place" width="19%"/>
+  <img src="./assets/kit/backwards.gif" alt="Walking Backwards" width="19%"/>
+  <img src="./assets/kit/run.gif" alt="Running" width="19%"/>
 </p>
 
 <h3 align="center">Text-to-Motion Control</h3>
@@ -39,9 +41,13 @@ Importantly, KINESIS generates muscle activity patterns that correlate well with
   <img src="./assets/high_level/hl_target_reach.gif" alt="Reaching Target" width="49%"/>
   <img src="./assets/high_level/hl_directional.gif" alt="Directional Control" width="49%"/>
 
+<h3 align="center">Penalty Kicks (MyoChallenge 2025)</h3>
+<p align="center">
+  <img src="./assets/high_level/soccer.gif" alt="Reaching Target"/>
+
 ## EMG Comparison
 <p align="center">
-  <img src="./assets/Fig7-emg.png" alt="EMG Comparison" width="80%"/>
+  <img src="./assets/emg.png" alt="EMG Comparison" width="80%"/>
 
 
 ## Installation
@@ -89,32 +95,37 @@ python src/utils/download_models.py
 - The saved `model.pth` checkpoints will be saved in the `data/trained_models` directory.
 
 ## Usage
+Unless specified otherwise, you can choose between the following musculoskeletal models for all tasks:
+- `legs`: 80 muscles
+- `legs_abs`: 86 muscles
+- `legs_back`: 290 muscles
+
 > **Note:** For MacOS users, you will need to change the command in the bash scripts to `mjpython` instead of `python`.
 
 ### KIT-Locomotion imitation
 To test Kinesis on motion imitation, run the following command:
 ```bash
 # Train set
-bash scripts/kit-locomotion.sh --mode train
+bash scripts/kit-locomotion.sh --model <model> --dataset train
 # Test set
-bash scripts/kit-locomotion.sh --mode test
+bash scripts/kit-locomotion.sh --model <model> --dataset test
 ```
 You can turn rendering on/off by setting the `--headless` flag to `False` or `True`, respectively.
 
 ### Text-to-Motion Control
 To test Kinesis on text-to-motion control, select one of the pre-generated motions in the `data/t2m` directory and run the following command:
 ```bash
-bash scripts/t2m.sh <motion_path>
+bash scripts/t2m.sh --model <model> --motion_file <motion_path>
 ```
 
 ### Target Reaching
 To test Kinesis on target reaching, run the following command:
 ```bash
-bash scripts/target-reach.sh
+bash scripts/target-reach.sh --model <model>
 ```
 
 ### Directional Control
-To test Kinesis on directional control, run the following command:
+To test Kinesis on directional control, run the following command (currently available only for the `legs` model):
 ```bash
 bash scripts/directional.sh
 ```
@@ -134,6 +145,12 @@ def key_callback(self, keycode):
 ...
 ```
 
+### Football Penalty Kicks
+To test Kinesis on football penalty kicks, run the following command (currently available only for the `legs_back` model):
+```bash
+bash scripts/ball-kick.sh
+```
+
 ## Training a new policy
 Kinesis consists of three policy experts, combined with a Mixture of Experts (MoE) module. Training is done iteratively through negative mining: First, we train the first expert on the training set, then we train the second expert on only the samples that the first expert failed to imitate, and so on until we reach sufficient performance. Finally, we train the MoE module to combine the experts, which are frozen during this step. We use Weights & Biases to log the training process.
 
@@ -141,7 +158,7 @@ Kinesis consists of three policy experts, combined with a Mixture of Experts (Mo
 
 Training an expert from scratch is done by running the following command:
 ```bash
-python src/run.py project=<project_name> exp_name=<experiment_name> epoch=-1 run=train_run run.num_threads=<num_threads> learning.actor_type="lattice"
+python src/run.py --config-name <model_type.yaml> exp_name=<experiment_name> epoch=-1 run.num_threads=<num_threads> learning.actor_type="lattice"
 ```
 - `<project_name>`: The name of the project for logging purposes.
 - `<experiment_name>`: The name of the experiment for logging purposes.
@@ -173,6 +190,14 @@ mv data/trained_models/<experiment_name> data/trained_models/<experiment_name>_e
 python src/run.py project=<project_name> exp_name=<experiment_name>_moe epoch=0 run=train_run run.expert_path=data/trained_models/<experiment_name> run.num_threads=<num_threads> learning.actor_type="moe"
 ```
 
+## Extra features
+### Fatigue modeling
+To activate the 3CC-r fatigue model during training or testing, set the `run.muscle_condition` parameter to `fatigue`:
+```bash
+python src/run.py --config-name <model_type.yaml> exp_name=<experiment_name> epoch=-1 run.num_threads=<num_threads> learning.actor_type="lattice" run.muscle_condition="fatigue"
+```
+
+
 ## Citation
 
 If you find this work useful in your research, please consider citing our [paper](https://arxiv.org/abs/2503.14637):
@@ -189,7 +214,7 @@ If you find this work useful in your research, please consider citing our [paper
 
 ## Acknowledgements
 
-This work would not have been possible without the amazing contributions of [PHC](https://github.com/ZhengyiLuo/PHC), [PHC_MJX](https://github.com/ZhengyiLuo/PHC_MJX), [SMPLSim](https://github.com/ZhengyiLuo/SMPLSim), on which the code is based, as well as [MyoSuite](https://sites.google.com/view/myosuite), from which we borrow the musculoskeletal model. Please consider citing & starring these repositories if you find them useful!
+This work would not have been possible without the amazing contributions of [PHC](https://github.com/ZhengyiLuo/PHC), [PHC_MJX](https://github.com/ZhengyiLuo/PHC_MJX), [SMPLSim](https://github.com/ZhengyiLuo/SMPLSim), on which the code is based, as well as [MyoSuite](https://sites.google.com/view/myosuite), from which we borrow the musculoskeletal models and fatigue model. Please consider citing & starring these repositories if you find them useful!
 
 For text-to-motion generation, we used the awesome work from Tevet et al. -- [Human Motion Diffusion Model](https://github.com/GuyTevet/motion-diffusion-model). Please consider citing their work if you use the text-to-motion generation code.
 
