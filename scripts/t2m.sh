@@ -13,6 +13,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --motion_file)
+            motion_file=$2
+            shift
+            shift
+            ;;
         --headless)
             headless=$2
             shift

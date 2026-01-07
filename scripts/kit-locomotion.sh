@@ -5,6 +5,7 @@ model=legs
 dataset=test
 headless=False
 actor_type=moe
+exp_name=kinesis-moe-imitation
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
