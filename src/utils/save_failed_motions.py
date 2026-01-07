@@ -28,9 +28,6 @@ def eval_cfg(model, policy, control) -> DictConfig:
         cfg.learning.actor_type = policy
         cfg.run.control_mode = control
         cfg.run.headless = True
-
-        if hasattr(cfg.env, 'terrain_noise_scale'):
-            cfg.env.terrain_noise_scale = 0.0  # Set terrain noise scale to 0.0 for evaluation
     return cfg
 
 def eval_imitation(eval_cfg: DictConfig, exp_name: str, epoch: int = -1, expert: int = 0) -> None:

@@ -7,11 +7,6 @@ control_frequency_inv: 10
 max_episode_length: 400
 success_radius: 0.2
 
-# Environment Configs
-terrain_noise_scale: 0.0  # Default terrain noise scale
-init_dim: 4.0
-init_cone: 0.167
-
 # Control Configs
 kp_scale: 1.0
 kd_scale: 1.0
