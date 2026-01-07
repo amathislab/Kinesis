@@ -77,11 +77,11 @@ class MyoLegsIm(MyoLegsTask):
             self.reset_bodies = MYOLEG_RESET_BODIES
             self.smpl_tracked_ids = SMPL_TRACKED_IDS
             self.smpl_reset_ids = SMPL_RESET_IDS
-        elif cfg.project == "kinesis_fullbody":
-            self.tracked_bodies = MYOLEG_FULLBODY_TRACKED_BODIES
-            self.reset_bodies = MYOLEG_FULLBODY_RESET_BODIES
-            self.smpl_tracked_ids = SMPL_FULLBODY_TRACKED_IDS
-            self.smpl_reset_ids = SMPL_FULLBODY_RESET_IDS
+        # elif cfg.project == "kinesis_fullbody":
+        #     self.tracked_bodies = MYOLEG_FULLBODY_TRACKED_BODIES
+        #     self.reset_bodies = MYOLEG_FULLBODY_RESET_BODIES
+        #     self.smpl_tracked_ids = SMPL_FULLBODY_TRACKED_IDS
+        #     self.smpl_reset_ids = SMPL_FULLBODY_RESET_IDS
         elif cfg.project == "kinesis_legs_abs" or cfg.project == "kinesis_legs_back":
             self.tracked_bodies = MYOLEG_ABS_TRACKED_BODIES
             self.reset_bodies = MYOLEG_ABS_RESET_BODIES

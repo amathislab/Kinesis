@@ -57,13 +57,13 @@ elif [[ $model == "legs_back" ]]; then
     config_name="config_legs_back.yaml"
     run_config="eval_run_legs_back"
     initial_pose_dir="data/initial_pose/legs_back"
-elif [[ $model == "fullbody" ]]; then
-    echo "Using fullbody model"
-    config_name="config_fullbody.yaml"
-    run_config="eval_run_fullbody"
-    initial_pose_dir="data/initial_pose/fullbody"
+# elif [[ $model == "fullbody" ]]; then
+#     echo "Using fullbody model"
+#     config_name="config_fullbody.yaml"
+#     run_config="eval_run_fullbody"
+#     initial_pose_dir="data/initial_pose/fullbody"
 else
-    echo "Invalid model: $model. Currently only 'legs' and 'fullbody' models are supported."
+    echo "Invalid model: $model. Currently only 'legs', 'legs_abs', and 'legs_back' models are supported."
     exit 1
 fi
 

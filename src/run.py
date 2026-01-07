@@ -30,7 +30,7 @@ import hydra
 @hydra.main(
     version_base=None,
     config_path="../cfg",
-    config_name="config_fullbody",
+    config_name="config_legs",
 )
 def main(cfg: DictConfig) -> None:
     print(
