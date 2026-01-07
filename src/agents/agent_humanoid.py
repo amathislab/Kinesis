@@ -99,6 +99,8 @@ class AgentHumanoid(AgentPPO, ABC):
             "==========================Agent Parameters==========================="
         )
         logger.info(f"State_dim: {self.state_dim}")
+        logger.info(f"Action_dim: {self.action_dim}")
+        logger.info(f"Actor Type: {self.cfg.learning.actor_type}")
         logger.info("============================================================")
 
     @abstractmethod
