@@ -117,6 +117,7 @@ To test Kinesis on text-to-motion control, select one of the pre-generated motio
 ```bash
 bash scripts/t2m.sh --model <model> --motion_file <motion_path>
 ```
+If you want to generate new motions from text prompts using MDM, follow the instructions in the `instructions/t2m.md` file.
 
 ### Target Reaching
 To test Kinesis on target reaching, run the following command:
