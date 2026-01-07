@@ -160,13 +160,13 @@ Training an expert from scratch is done by running the following command:
 ```bash
 python src/run.py --config-name <model_type.yaml> exp_name=<experiment_name> epoch=-1 run.num_threads=<num_threads> learning.actor_type="lattice"
 ```
-- `<project_name>`: The name of the project for logging purposes.
+- `<model_type.yaml>`: Choose between `config_legs.yaml`, `config_legs_abs.yaml`, or `config_legs_back.yaml`, depending on the musculoskeletal model you want to use.
 - `<experiment_name>`: The name of the experiment for logging purposes.
 - `<num_threads>`: The number of threads to use for training. We usually set this to the amount of CPU threads available on the machine.
 
 Once the policy has reached a plateau (in terms of average episode length), we need to evaluate its performance on the **train** set, and identify the samples that the policy fails to imitate. This is done by running the following command:
 ```bash
-python src/utils/save_failed_motions.py --exp_name <experiment_name> --epoch <epoch> --expert 0
+python src/utils/save_failed_motions.py --config-name <model_type.yaml> --exp_name <experiment_name> --epoch <epoch> --expert 0
 ```
 - `<experiment_name>`: The name of the experiment under which the policy was trained.
 - `<epoch>`: The epoch at which to evaluate the policy. Make sure that there exists a saved checkpoint at this epoch.
@@ -176,7 +176,7 @@ The failed samples will be saved as a new training set with the name `kit_train_
 
 To train the next expert, run the following command:
 ```bash
-python src/run.py project=<project_name> exp_name=<experiment_name>_expert_1 epoch=-1 run=train_run run.num_threads=<num_threads> learning.actor_type="lattice" run.motion_file=data/kit_train_motion_dict_expert_1 run.initial_pose_file=data/kit_train_initial_pose_expert_1.pkl
+python src/run.py --config-name <model_type.yaml> exp_name=<experiment_name>_expert_1 epoch=-1 run=train_run run.num_threads=<num_threads> learning.actor_type="lattice" run.motion_file=data/kit_train_motion_dict_expert_1 run.initial_pose_file=data/kit_train_initial_pose_expert_1.pkl
 ```
 
 ... and so on, until the negative-mined dataset is empty or sufficiently small.
@@ -185,9 +185,9 @@ python src/run.py project=<project_name> exp_name=<experiment_name>_expert_1 epo
 Once all experts have been trained, we can train the MoE module to combine them. To train the MoE module, run the following commands:
 ```bash
 # Rename the initial experiment folder:
-mv data/trained_models/<experiment_name> data/trained_models/<experiment_name>_expert_0
+mv data/trained_models/<model_type>/<experiment_name> data/trained_models/<model_type>/<experiment_name>_expert_0
 # Train the MoE module:
-python src/run.py project=<project_name> exp_name=<experiment_name>_moe epoch=0 run=train_run run.expert_path=data/trained_models/<experiment_name> run.num_threads=<num_threads> learning.actor_type="moe"
+python src/run.py --config-name <model_type.yaml> exp_name=<experiment_name>_moe epoch=0 run=train_run run.expert_path=data/trained_models/<model_type>/<experiment_name>_ run.num_threads=<num_threads> learning.actor_type="moe"
 ```
 
 ## Extra features
