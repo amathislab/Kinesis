@@ -300,6 +300,8 @@ class MyoLegsEnv(BaseEnv):
             if not self.paused:
                 if self.control_mode == "PD":
                     muscle_activity = target_length_to_activation(target_lengths, self.mj_data, self.mj_model)
+                    if self.muscle_condition == "fatigue":
+                        muscle_activity = self.fatigue.compute_act(muscle_activity)[0]
 
                     # MANUAL MUSCLE DEACTIVATION
                     if self.cfg.run.deactivate_muscles:
