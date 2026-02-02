@@ -1,10 +1,12 @@
-# KINESIS: Reinforcement Learning-Based Motion Imitation for Physiologically Plausible Musculoskeletal Motor Control
+# [ICRA 2026] KINESIS: Reinforcement Learning-Based Motion Imitation for Physiologically Plausible Musculoskeletal Motor Control
 
 <p align="center">
   <img src="./assets/abstract-figure.png" alt="KINESIS Logo" width="400"/>
 </p>
 
-**🌟🌟 New Update! 🌟🌟**  Kinesis now supports musculoskeletal embodiments of up to _290 muscles_, downstream tasks including football penalty kicks ⚽️, and fatigue!
+**🚀🚀 New update! 🚀🚀** Kinesis was accepted to ICRA 2026!
+
+**🌟🌟 Kinesis 2.0 🌟🌟**  Kinesis now supports musculoskeletal embodiments of up to _290 muscles_, downstream tasks including football penalty kicks ⚽️, and fatigue!
 
 **🚨🚨 Coming soon! 🚨🚨** Full-body model with arms, controlled by _416 muscles_! Stay tuned!
 
