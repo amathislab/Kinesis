@@ -1,9 +1,10 @@
+# This file contains code adapted from:
+#
+# 1. MyoSuite (https://github.com/MyoHub/myosuite/blob/main/myosuite/envs/myo/fatigue.py)
+
 import gymnasium as gym
 import mujoco
 import numpy as np
-
-# this code was adapted from the original implementation of CumulativeFatigue in MyoSuite : https://github.com/MyoHub/myosuite/blob/main/myosuite/envs/myo/fatigue.py
-# the unique change compared to the original implementation is that the changing state drive is continously smoothed instead of discretized
 
 class CumulativeFatigue():
     def __init__(self, mj_model, frameskip, seed=None):

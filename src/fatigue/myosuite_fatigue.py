@@ -1,3 +1,7 @@
+# This file contains code adapted from:
+#
+# 1. MyoSuite (https://github.com/MyoHub/myosuite/blob/main/myosuite/envs/myo/fatigue.py)
+
 import gymnasium as gym
 import mujoco
 import numpy as np

@@ -1,3 +1,15 @@
+# Copyright (c) 2025 Mathis Group for Computational Neuroscience and AI, EPFL
+# All rights reserved.
+#
+# Licensed under the BSD 3-Clause License.
+#
+# This file contains code adapted from:
+#
+# 1. PHC (https://github.com/ZhengyiLuo/PHC)
+#    Copyright (c) 2023 Carnegie Mellon University
+#    Copyright (c) 2018-2023, NVIDIA Corporation
+#    All rights reserved.
+
 from ast import Try
 import torch
 import joblib
