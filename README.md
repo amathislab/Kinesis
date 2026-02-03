@@ -223,6 +223,8 @@ For text-to-motion generation, we used the awesome work from Tevet et al. -- [Hu
 
 We also acknowledge the foundational contribution of the Max Planck Institute for Intelligent Systems, which developed the [SMPL model](https://smpl.is.tue.mpg.de/) and curated the [AMASS dataset](https://amass.is.tue.mpg.de/).
 
+The penalty kick task is based on the MyoChallenge 2025 competition. Please cite the original [MyoSuite paper](https://sites.google.com/view/myosuite) and the upcoming [MyoChallenge 2025 paper](TBA) if you use the penalty kick environment.
+
 The EMG analysis uses processed data from the paper "A wearable real-time kinetic measurement sensor setup for human locomotion" by [Wang et al. (2023)](https://www.cambridge.org/core/journals/wearable-technologies/article/wearable-realtime-kinetic-measurement-sensor-setup-for-human-locomotion/488C21B7706FFDFA7FFAB387FD0A1A64?utm_campaign=shareaholic&utm_medium=copy_link&utm_source=bookmark). We thank the authors for creating this open-source dataset. Please cite the original paper if you use the EMG data.
 
 This project was funded by Swiss SNF grant (310030 212516). We thank members of the Mathis Group for helpful feedback.

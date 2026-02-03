@@ -8,6 +8,10 @@
 # 1. SMPLSim (https://github.com/ZhengyiLuo/SMPLSim)
 #    Copyright (c) 2024 Zhengyi Luo
 #    Licensed under the BSD 3-Clause License.
+# 2. MyoSuite (https://github.com/MyoHub/myosuite)
+#    Copyright (c) MyoSuite Authors
+#    Authors  :: Sherwin Chan (sherwin.chan@ntu.edu.sg), J-Anne Yow (janne.yow@ntu.edu.sg), Chun Kwang Tan (cktan.neumove@gmail.com), Vikash Kumar (vikashplus@gmail.com), Vittorio Caggiano (caggiano@gmail.com), Pierre Schumacher (schumacherpier@gmail.com)
+#    Licensed under the Apache License, Version 2.0
 
 import numpy as np
 from typing import Tuple
