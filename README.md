@@ -8,7 +8,7 @@
 
 **🌟🌟 Kinesis 2.0 🌟🌟**  Kinesis now supports musculoskeletal embodiments of up to _290 muscles_, downstream tasks including football penalty kicks ⚽️, and fatigue!
 
-**🚨🚨 Coming soon! 🚨🚨** Full-body model with arms, controlled by _416 muscles_! Stay tuned!
+**🚨🚨 Muscle Mimic 🚨🚨** Full-body model with arms, controlled by _416 muscles_ with JAX-based motion imitation learning framework from the lab! Check out https://github.com/amathislab/musclemimic
 
 ## Overview
 
